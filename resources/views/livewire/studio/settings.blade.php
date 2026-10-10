@@ -1,11 +1,5 @@
 @php
     $studio = $form->studio;
-
-    $imageFields = [
-        ['property' => 'logo', 'column' => 'logo_path', 'label' => 'Logo', 'hint' => 'Square PNG, JPG or WEBP, up to 2 MB.', 'current' => $studio->logoUrl(), 'shape' => 'size-16 rounded-full'],
-        ['property' => 'coverWedding', 'column' => 'cover_wedding_path', 'label' => 'Wedding cover photo', 'hint' => 'Shown at the top of wedding quotations. Landscape, up to 5 MB.', 'current' => $studio->coverUrl('wedding'), 'shape' => 'h-16 w-28 rounded-lg'],
-        ['property' => 'coverCorporate', 'column' => 'cover_corporate_path', 'label' => 'Corporate cover photo', 'hint' => 'Shown at the top of corporate quotations. Landscape, up to 5 MB.', 'current' => $studio->coverUrl('corporate'), 'shape' => 'h-16 w-28 rounded-lg'],
-    ];
 @endphp
 
 <div class="mx-auto max-w-3xl space-y-6">
@@ -66,32 +60,400 @@
         </section>
 
         {{-- Images --}}
-        <section class="card space-y-5 p-6">
-            <h2 class="text-lg font-semibold">Logo and cover photos</h2>
+        <section class="card space-y-6 p-6 sm:p-7">
+            <div class="border-b border-line pb-4">
+                <h2 class="text-lg font-semibold text-ink">Logo and cover photos</h2>
+                <p class="mt-0.5 text-sm text-muted">Customize your studio branding.</p>
+            </div>
 
-            @foreach ($imageFields as $field)
-                <div wire:key="image-{{ $field['property'] }}">
-                    <label for="settings-{{ $field['property'] }}" class="label">{{ $field['label'] }}</label>
-                    <div class="flex flex-wrap items-center gap-4">
-                        @if ($form->{$field['property']}?->isPreviewable())
-                            <img src="{{ $form->{$field['property']}->temporaryUrl() }}" alt="" class="{{ $field['shape'] }} border border-line object-cover">
-                        @elseif ($field['current'])
-                            <img src="{{ $field['current'] }}" alt="" class="{{ $field['shape'] }} border border-line object-cover">
-                        @else
-                            <span class="{{ $field['shape'] }} flex items-center justify-center border border-dashed border-line text-xs text-muted">None</span>
-                        @endif
+            {{-- Studio Logo --}}
+            <div wire:key="image-logo-card" class="rounded-xl border border-line bg-canvas/40 p-4 sm:p-5">
+                <input id="settings-logo" type="file" wire:model="form.logo" accept="image/png,image/jpeg,image/webp" class="sr-only">
 
-                        <input id="settings-{{ $field['property'] }}" type="file" wire:model="form.{{ $field['property'] }}" accept="image/png,image/jpeg,image/webp" class="min-w-0 text-sm">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                    {{-- Logo Avatar / Preview Box (1:1 Aspect Ratio) --}}
+                    <div class="relative group size-20 sm:size-24 shrink-0">
+                        <label for="settings-logo" @class([
+                            'relative flex size-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-surface transition hover:border-brand-500 hover:bg-brand-50/30 focus-within:ring-2 focus-within:ring-brand-500',
+                            'border border-line shadow-xs' => ($form->logo?->isPreviewable() || (! $form->removeLogo && $studio->logoUrl())),
+                            'border-2 border-dashed border-line' => (! $form->logo?->isPreviewable() && ($form->removeLogo || ! $studio->logoUrl())),
+                        ])>
+                            @if ($form->logo?->isPreviewable())
+                                <img src="{{ $form->logo->temporaryUrl() }}" alt="New logo preview" class="size-full object-cover">
+                                <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white opacity-0 transition group-hover:opacity-100">
+                                    <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                                    </svg>
+                                    <span class="text-[10px] font-semibold mt-0.5">Change</span>
+                                </div>
+                            @elseif (! $form->removeLogo && $studio->logoUrl())
+                                <img src="{{ $studio->logoUrl() }}" alt="{{ $studio->name }} logo" class="size-full object-cover">
+                                <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white opacity-0 transition group-hover:opacity-100">
+                                    <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                                    </svg>
+                                    <span class="text-[10px] font-semibold mt-0.5">Change</span>
+                                </div>
+                            @elseif ($form->removeLogo)
+                                <div class="flex flex-col items-center justify-center text-red-500/80 p-2 text-center">
+                                    <svg class="size-6 stroke-[1.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                    </svg>
+                                    <span class="text-[10px] font-semibold mt-1">Removed</span>
+                                </div>
+                            @else
+                                <div class="flex flex-col items-center justify-center text-muted group-hover:text-brand-600 transition p-2 text-center">
+                                    <svg class="size-6 stroke-[1.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                                    </svg>
+                                    <span class="text-[10px] font-semibold mt-1">Add logo</span>
+                                </div>
+                            @endif
 
-                        @if ($field['current'])
-                            <button type="button" wire:click="removeImage('{{ $field['column'] }}')" wire:confirm="Remove this image?" class="text-sm font-semibold text-red-700">Remove</button>
-                        @endif
+                            {{-- Loading spinner overlay --}}
+                            <div wire:loading.flex wire:target="form.logo" class="absolute inset-0 flex flex-col items-center justify-center bg-surface/90 backdrop-blur-xs rounded-2xl z-10">
+                                <svg class="size-5 animate-spin text-brand-600" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                        </label>
                     </div>
-                    <p class="mt-1.5 text-xs text-muted">{{ $field['hint'] }}</p>
-                    <div wire:loading wire:target="form.{{ $field['property'] }}" class="mt-1 text-sm text-muted">Uploading…</div>
-                    @error('form.'.$field['property']) <p class="input-error">{{ $message }}</p> @enderror
+
+                    {{-- Logo Details & Actions --}}
+                    <div class="flex-1 min-w-0 space-y-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="text-sm font-semibold text-ink">Studio logo</h3>
+                        </div>
+                        <p class="text-xs text-muted">Square PNG, JPG, or WEBP up to 2 MB. Displayed on quotation headers, navigation bar, and emails.</p>
+
+                        <div class="flex flex-wrap items-center gap-2 pt-1">
+                            @if ($form->logo?->isPreviewable())
+                                <label for="settings-logo" class="btn-secondary cursor-pointer !py-1.5 !px-3.5 text-xs sm:text-sm">
+                                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 16.5v-2.25m-14.25-5.25L12 3m0 0 5.25 5.25M12 3v12" />
+                                    </svg>
+                                    <span>Change logo</span>
+                                </label>
+                                <button type="button" wire:click="clearSelectedImage('logo')" class="btn-secondary !py-1.5 !px-3.5 text-xs sm:text-sm text-red-600 hover:text-red-700">
+                                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                    </svg>
+                                    <span>Clear selection</span>
+                                </button>
+                            @elseif ($form->removeLogo)
+                                <button type="button" wire:click="undoImageRemoval('logo')" class="btn-secondary !py-1.5 !px-3.5 text-xs sm:text-sm">
+                                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+                                    </svg>
+                                    <span>Undo removal</span>
+                                </button>
+                                <label for="settings-logo" class="btn-secondary cursor-pointer !py-1.5 !px-3.5 text-xs sm:text-sm">
+                                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 16.5v-2.25m-14.25-5.25L12 3m0 0 5.25 5.25M12 3v12" />
+                                    </svg>
+                                    <span>Upload new logo</span>
+                                </label>
+                            @elseif ($studio->logoUrl())
+                                <label for="settings-logo" class="btn-secondary cursor-pointer !py-1.5 !px-3.5 text-xs sm:text-sm">
+                                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 16.5v-2.25m-14.25-5.25L12 3m0 0 5.25 5.25M12 3v12" />
+                                    </svg>
+                                    <span>Change logo</span>
+                                </label>
+                                <button type="button" wire:click="markImageForRemoval('logo')" class="btn-danger !py-1.5 !px-3.5 text-xs sm:text-sm">
+                                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                    </svg>
+                                    <span>Remove</span>
+                                </button>
+                            @else
+                                <label for="settings-logo" class="btn-secondary cursor-pointer !py-1.5 !px-3.5 text-xs sm:text-sm">
+                                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 16.5v-2.25m-14.25-5.25L12 3m0 0 5.25 5.25M12 3v12" />
+                                    </svg>
+                                    <span>Upload logo</span>
+                                </label>
+                            @endif
+
+                            <div wire:loading wire:target="form.logo" class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600">
+                                <svg class="size-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>Uploading preview…</span>
+                            </div>
+                        </div>
+
+                        @error('form.logo')
+                            <p class="input-error text-xs">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
-            @endforeach
+            </div>
+
+            {{-- Cover Photos Grid --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {{-- Wedding Cover Photo --}}
+                <div wire:key="image-coverWedding-card" class="flex flex-col justify-between rounded-xl border border-line bg-canvas/40 p-4 sm:p-5 transition hover:border-line/80">
+                    <input id="settings-coverWedding" type="file" wire:model="form.coverWedding" accept="image/png,image/jpeg,image/webp" class="sr-only">
+
+                    <div class="space-y-3">
+                        <div>
+                            <h3 class="text-sm font-semibold text-ink">Wedding cover photo</h3>
+                            <p class="text-xs text-muted mt-0.5">Shown at the top of wedding quotations. Landscape, up to 5 MB.</p>
+                        </div>
+
+                        {{-- Banner Preview (16:9 Aspect Ratio) --}}
+                        <div @class([
+                            'relative group aspect-video w-full overflow-hidden rounded-xl bg-surface transition shadow-xs',
+                            'border border-line' => ($form->coverWedding?->isPreviewable() || (! $form->removeCoverWedding && $studio->coverUrl('wedding'))),
+                            'border-2 border-dashed border-line' => (! $form->coverWedding?->isPreviewable() && ($form->removeCoverWedding || ! $studio->coverUrl('wedding'))),
+                        ])>
+                            <label for="settings-coverWedding" class="relative flex size-full cursor-pointer items-center justify-center transition focus-within:ring-2 focus-within:ring-brand-500">
+                                @if ($form->coverWedding?->isPreviewable())
+                                    <img src="{{ $form->coverWedding->temporaryUrl() }}" alt="Wedding cover preview" class="size-full object-cover">
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/45 text-white opacity-0 transition group-hover:opacity-100">
+                                        <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                                        </svg>
+                                        <span class="text-xs font-medium mt-1">Change photo</span>
+                                    </div>
+                                @elseif (! $form->removeCoverWedding && $studio->coverUrl('wedding'))
+                                    <img src="{{ $studio->coverUrl('wedding') }}" alt="Wedding cover" class="size-full object-cover">
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/45 text-white opacity-0 transition group-hover:opacity-100">
+                                        <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                                        </svg>
+                                        <span class="text-xs font-medium mt-1">Change photo</span>
+                                    </div>
+                                @elseif ($form->removeCoverWedding)
+                                    <div class="flex flex-col items-center justify-center text-red-500/80 p-4 text-center">
+                                        <svg class="size-8 stroke-[1.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                        </svg>
+                                        <span class="text-xs font-semibold mt-1.5">Marked for removal</span>
+                                        <span class="text-[11px] text-muted">Will be removed when settings are saved</span>
+                                    </div>
+                                @else
+                                    <div class="flex flex-col items-center justify-center text-muted group-hover:text-brand-600 transition p-4 text-center">
+                                        <svg class="size-8 stroke-[1.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                                        </svg>
+                                        <span class="text-xs font-semibold mt-1.5">Add wedding cover</span>
+                                        <span class="text-[11px] text-muted">16:9 landscape format</span>
+                                    </div>
+                                @endif
+
+                                {{-- Loading Overlay --}}
+                                <div wire:loading.flex wire:target="form.coverWedding" class="absolute inset-0 flex flex-col items-center justify-center bg-surface/90 backdrop-blur-xs z-10">
+                                    <svg class="size-6 animate-spin text-brand-600" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span class="text-xs font-semibold text-brand-600 mt-2">Uploading preview…</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {{-- Actions --}}
+                    <div class="mt-4 pt-3 border-t border-line/60 space-y-2">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
+                                @if ($form->coverWedding?->isPreviewable())
+                                    <label for="settings-coverWedding" class="btn-secondary cursor-pointer !py-1.5 !px-3 text-xs">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 16.5v-2.25m-14.25-5.25L12 3m0 0 5.25 5.25M12 3v12" />
+                                        </svg>
+                                        <span>Change photo</span>
+                                    </label>
+                                    <button type="button" wire:click="clearSelectedImage('coverWedding')" class="btn-secondary !py-1.5 !px-3 text-xs text-red-600 hover:text-red-700">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                        </svg>
+                                        <span>Clear selection</span>
+                                    </button>
+                                @elseif ($form->removeCoverWedding)
+                                    <button type="button" wire:click="undoImageRemoval('coverWedding')" class="btn-secondary !py-1.5 !px-3 text-xs">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+                                        </svg>
+                                        <span>Undo removal</span>
+                                    </button>
+                                    <label for="settings-coverWedding" class="btn-secondary cursor-pointer !py-1.5 !px-3 text-xs">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 16.5v-2.25m-14.25-5.25L12 3m0 0 5.25 5.25M12 3v12" />
+                                        </svg>
+                                        <span>Upload new</span>
+                                    </label>
+                                @elseif ($studio->coverUrl('wedding'))
+                                    <label for="settings-coverWedding" class="btn-secondary cursor-pointer !py-1.5 !px-3 text-xs">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 16.5v-2.25m-14.25-5.25L12 3m0 0 5.25 5.25M12 3v12" />
+                                        </svg>
+                                        <span>Change photo</span>
+                                    </label>
+                                    <button type="button" wire:click="markImageForRemoval('coverWedding')" class="btn-danger !py-1.5 !px-3 text-xs">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                        </svg>
+                                        <span>Remove</span>
+                                    </button>
+                                @else
+                                    <label for="settings-coverWedding" class="btn-secondary cursor-pointer !py-1.5 !px-3 text-xs">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 16.5v-2.25m-14.25-5.25L12 3m0 0 5.25 5.25M12 3v12" />
+                                        </svg>
+                                        <span>Upload photo</span>
+                                    </label>
+                                @endif
+                            </div>
+
+                            <div wire:loading wire:target="form.coverWedding" class="text-xs text-brand-600 font-medium">
+                                Uploading…
+                            </div>
+                        </div>
+
+                        @error('form.coverWedding')
+                            <p class="input-error text-xs">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                {{-- Corporate Cover Photo --}}
+                <div wire:key="image-coverCorporate-card" class="flex flex-col justify-between rounded-xl border border-line bg-canvas/40 p-4 sm:p-5 transition hover:border-line/80">
+                    <input id="settings-coverCorporate" type="file" wire:model="form.coverCorporate" accept="image/png,image/jpeg,image/webp" class="sr-only">
+
+                    <div class="space-y-3">
+                        <div>
+                            <h3 class="text-sm font-semibold text-ink">Corporate cover photo</h3>
+                            <p class="text-xs text-muted mt-0.5">Shown at the top of corporate quotations. Landscape, up to 5 MB.</p>
+                        </div>
+
+                        {{-- Banner Preview (16:9 Aspect Ratio) --}}
+                        <div @class([
+                            'relative group aspect-video w-full overflow-hidden rounded-xl bg-surface transition shadow-xs',
+                            'border border-line' => ($form->coverCorporate?->isPreviewable() || (! $form->removeCoverCorporate && $studio->coverUrl('corporate'))),
+                            'border-2 border-dashed border-line' => (! $form->coverCorporate?->isPreviewable() && ($form->removeCoverCorporate || ! $studio->coverUrl('corporate'))),
+                        ])>
+                            <label for="settings-coverCorporate" class="relative flex size-full cursor-pointer items-center justify-center transition focus-within:ring-2 focus-within:ring-brand-500">
+                                @if ($form->coverCorporate?->isPreviewable())
+                                    <img src="{{ $form->coverCorporate->temporaryUrl() }}" alt="Corporate cover preview" class="size-full object-cover">
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/45 text-white opacity-0 transition group-hover:opacity-100">
+                                        <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                                        </svg>
+                                        <span class="text-xs font-medium mt-1">Change photo</span>
+                                    </div>
+                                @elseif (! $form->removeCoverCorporate && $studio->coverUrl('corporate'))
+                                    <img src="{{ $studio->coverUrl('corporate') }}" alt="Corporate cover" class="size-full object-cover">
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/45 text-white opacity-0 transition group-hover:opacity-100">
+                                        <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                                        </svg>
+                                        <span class="text-xs font-medium mt-1">Change photo</span>
+                                    </div>
+                                @elseif ($form->removeCoverCorporate)
+                                    <div class="flex flex-col items-center justify-center text-red-500/80 p-4 text-center">
+                                        <svg class="size-8 stroke-[1.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                        </svg>
+                                        <span class="text-xs font-semibold mt-1.5">Marked for removal</span>
+                                        <span class="text-[11px] text-muted">Will be removed when settings are saved</span>
+                                    </div>
+                                @else
+                                    <div class="flex flex-col items-center justify-center text-muted group-hover:text-brand-600 transition p-4 text-center">
+                                        <svg class="size-8 stroke-[1.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                                        </svg>
+                                        <span class="text-xs font-semibold mt-1.5">Add corporate cover</span>
+                                        <span class="text-[11px] text-muted">16:9 landscape format</span>
+                                    </div>
+                                @endif
+
+                                {{-- Loading Overlay --}}
+                                <div wire:loading.flex wire:target="form.coverCorporate" class="absolute inset-0 flex flex-col items-center justify-center bg-surface/90 backdrop-blur-xs z-10">
+                                    <svg class="size-6 animate-spin text-brand-600" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span class="text-xs font-semibold text-brand-600 mt-2">Uploading preview…</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {{-- Actions --}}
+                    <div class="mt-4 pt-3 border-t border-line/60 space-y-2">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
+                                @if ($form->coverCorporate?->isPreviewable())
+                                    <label for="settings-coverCorporate" class="btn-secondary cursor-pointer !py-1.5 !px-3 text-xs">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 16.5v-2.25m-14.25-5.25L12 3m0 0 5.25 5.25M12 3v12" />
+                                        </svg>
+                                        <span>Change photo</span>
+                                    </label>
+                                    <button type="button" wire:click="clearSelectedImage('coverCorporate')" class="btn-secondary !py-1.5 !px-3 text-xs text-red-600 hover:text-red-700">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                        </svg>
+                                        <span>Clear selection</span>
+                                    </button>
+                                @elseif ($form->removeCoverCorporate)
+                                    <button type="button" wire:click="undoImageRemoval('coverCorporate')" class="btn-secondary !py-1.5 !px-3 text-xs">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+                                        </svg>
+                                        <span>Undo removal</span>
+                                    </button>
+                                    <label for="settings-coverCorporate" class="btn-secondary cursor-pointer !py-1.5 !px-3 text-xs">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 16.5v-2.25m-14.25-5.25L12 3m0 0 5.25 5.25M12 3v12" />
+                                        </svg>
+                                        <span>Upload new</span>
+                                    </label>
+                                @elseif ($studio->coverUrl('corporate'))
+                                    <label for="settings-coverCorporate" class="btn-secondary cursor-pointer !py-1.5 !px-3 text-xs">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 16.5v-2.25m-14.25-5.25L12 3m0 0 5.25 5.25M12 3v12" />
+                                        </svg>
+                                        <span>Change photo</span>
+                                    </label>
+                                    <button type="button" wire:click="markImageForRemoval('coverCorporate')" class="btn-danger !py-1.5 !px-3 text-xs">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                        </svg>
+                                        <span>Remove</span>
+                                    </button>
+                                @else
+                                    <label for="settings-coverCorporate" class="btn-secondary cursor-pointer !py-1.5 !px-3 text-xs">
+                                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 16.5v-2.25m-14.25-5.25L12 3m0 0 5.25 5.25M12 3v12" />
+                                        </svg>
+                                        <span>Upload photo</span>
+                                    </label>
+                                @endif
+                            </div>
+
+                            <div wire:loading wire:target="form.coverCorporate" class="text-xs text-brand-600 font-medium">
+                                Uploading…
+                            </div>
+                        </div>
+
+                        @error('form.coverCorporate')
+                            <p class="input-error text-xs">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+            </div>
         </section>
 
         {{-- Theme --}}
@@ -129,8 +491,8 @@
 
             <div>
                 <label for="settings-accent" class="label">Accent colour (optional)</label>
-                <div class="flex items-center gap-3">
-                    <input type="color" aria-label="Pick accent colour" value="{{ $form->accentColor ?: '#0F4C4A' }}" wire:model.live="form.accentColor" class="h-10 w-14 cursor-pointer rounded-lg border border-line bg-surface p-1">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <input type="color" aria-label="Pick accent colour" value="{{ $form->accentColor ?: '#0F4C4A' }}" wire:model.live="form.accentColor" class="h-10 w-14 cursor-pointer rounded-lg border border-line bg-surface p-1 shrink-0">
                     <input id="settings-accent" type="text" wire:model.live.debounce.400ms="form.accentColor" class="input max-w-36 font-mono" placeholder="#0F4C4A">
                     @if ($form->accentColor)
                         <button type="button" wire:click="$set('form.accentColor', '')" class="text-sm font-semibold text-muted hover:text-ink">Use theme colour</button>
@@ -205,8 +567,8 @@
             </div>
         </section>
 
-        <div class="sticky bottom-4 flex justify-end">
-            <button type="submit" class="btn-primary shadow-lg" wire:loading.attr="disabled">
+        <div class="sticky bottom-4 z-20 flex justify-end">
+            <button type="submit" class="btn-primary shadow-lg w-full sm:w-auto" wire:loading.attr="disabled">
                 <span wire:loading.remove wire:target="save">Save settings</span>
                 <span wire:loading wire:target="save">Saving…</span>
             </button>

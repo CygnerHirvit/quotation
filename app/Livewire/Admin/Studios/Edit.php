@@ -41,6 +41,29 @@ class Edit extends Component
         $this->form->setStudio($studio);
     }
 
+    public function updatedFormLogo(): void
+    {
+        $this->form->removeLogo = false;
+        $this->validateOnly('form.logo');
+    }
+
+    public function clearSelectedLogo(): void
+    {
+        $this->form->clearLogo();
+        $this->resetValidation('form.logo');
+    }
+
+    public function markLogoForRemoval(): void
+    {
+        $this->form->markLogoForRemoval();
+        $this->resetValidation('form.logo');
+    }
+
+    public function undoLogoRemoval(): void
+    {
+        $this->form->undoLogoRemoval();
+    }
+
     public function save(): void
     {
         $this->authorize('update', $this->studio);

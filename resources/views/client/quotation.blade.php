@@ -64,7 +64,7 @@
                     @if ($quotation->isAccepted())
                         <a href="#terms" class="q-btn q-btn--done"><span aria-hidden="true">✓</span><span class="q-btn__text">Accepted</span></a>
                     @elseif ($canAccept)
-                        <button type="button" class="q-btn q-btn--primary" data-open-accept><span aria-hidden="true">✍</span>&nbsp;Accept &amp; E-Sign</button>
+                        <button type="button" class="q-btn q-btn--primary" data-open-accept><span aria-hidden="true">✍</span>&nbsp;<span class="q-btn__text">Accept &amp; E-Sign</span></button>
                     @endif
                     <button type="button" class="q-btn" onclick="window.print()" aria-label="Print or save as PDF">
                         <span aria-hidden="true">⎙</span><span class="q-btn__text">Print / PDF</span>
@@ -492,6 +492,11 @@
                 document.querySelectorAll('[data-open-accept]').forEach((button) => button.addEventListener('click', open));
                 dialog.querySelector('[data-close-accept]').addEventListener('click', () => dialog.close());
                 dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+                window.addEventListener('resize', () => {
+                    if (dialog.open && methodInput.value === 'draw' && !hasInk) {
+                        sizeCanvas();
+                    }
+                });
 
                 if (dialog.hasAttribute('data-open-on-load')) open();
             })();

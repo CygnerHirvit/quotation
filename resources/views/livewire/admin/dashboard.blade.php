@@ -26,10 +26,10 @@
         </div>
         <ul class="divide-y divide-line">
             @forelse ($recentStudios as $studio)
-                <li wire:key="studio-{{ $studio->id }}" class="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-                    <div>
-                        <p class="font-medium">{{ $studio->name }}</p>
-                        <p class="text-sm text-muted">{{ $studio->city ?? 'No city' }} · {{ $studio->quote_prefix }} · {{ $studio->users_count }} users</p>
+                <li wire:key="studio-{{ $studio->id }}" class="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-3.5 sm:py-4">
+                    <div class="min-w-0 flex-1">
+                        <p class="font-medium text-ink truncate">{{ $studio->name }}</p>
+                        <p class="text-xs sm:text-sm text-muted truncate">{{ $studio->city ?? 'No city' }} · {{ $studio->quote_prefix }} · {{ $studio->users_count }} users</p>
                     </div>
                     <span @class([
                         'rounded-full px-3 py-1 text-xs font-semibold',

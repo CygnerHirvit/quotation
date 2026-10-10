@@ -86,34 +86,39 @@
         @else
             <ul wire:sort="sort" class="divide-y divide-line">
                 @foreach ($items as $item)
-                    <li wire:key="price-item-{{ $item->id }}" wire:sort:item="{{ $item->id }}" @class(['flex items-center gap-3 bg-surface px-4 py-3', 'opacity-60' => ! $item->is_active])>
-                        <button type="button" wire:sort:handle class="cursor-grab px-1 text-lg leading-none text-muted" aria-label="Drag to reorder">⋮⋮</button>
+                    <li wire:key="price-item-{{ $item->id }}" wire:sort:item="{{ $item->id }}" @class(['flex flex-col sm:flex-row sm:items-center gap-3 bg-surface px-4 py-3.5', 'opacity-60' => ! $item->is_active])>
+                        <div class="flex items-start gap-2.5 min-w-0 flex-1">
+                            <button type="button" wire:sort:handle class="mt-1 sm:mt-0 cursor-grab px-1 text-lg leading-none text-muted shrink-0" aria-label="Drag to reorder">⋮⋮</button>
 
-                        <div class="min-w-0 flex-1">
-                            <p class="font-medium">
-                                {{ $item->name }}
-                                @if ($item->internal_label)
-                                    <span class="badge ml-1 bg-canvas text-muted">{{ $item->internal_label }}</span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-baseline justify-between sm:justify-start gap-2 flex-wrap">
+                                    <p class="font-medium text-ink">
+                                        {{ $item->name }}
+                                        @if ($item->internal_label)
+                                            <span class="badge ml-1 bg-canvas text-muted">{{ $item->internal_label }}</span>
+                                        @endif
+                                        @unless ($item->is_active)
+                                            <span class="badge ml-1 bg-canvas text-muted">Hidden</span>
+                                        @endunless
+                                    </p>
+                                    <p class="sm:hidden font-semibold tabular-nums text-ink">{{ \App\Support\Inr::format($item->rate) }}</p>
+                                </div>
+                                @if ($item->note || $item->delivery)
+                                    <p class="truncate text-sm text-muted mt-0.5">
+                                        {{ collect([$item->note, $item->delivery ? 'Delivery: '.$item->delivery : null])->filter()->join(' · ') }}
+                                    </p>
                                 @endif
-                                @unless ($item->is_active)
-                                    <span class="badge ml-1 bg-canvas text-muted">Hidden</span>
-                                @endunless
-                            </p>
-                            @if ($item->note || $item->delivery)
-                                <p class="truncate text-sm text-muted">
-                                    {{ collect([$item->note, $item->delivery ? 'Delivery: '.$item->delivery : null])->filter()->join(' · ') }}
-                                </p>
-                            @endif
+                            </div>
                         </div>
 
-                        <p class="w-28 text-right font-semibold tabular-nums">{{ \App\Support\Inr::format($item->rate) }}</p>
+                        <p class="hidden sm:block w-28 text-right font-semibold tabular-nums shrink-0">{{ \App\Support\Inr::format($item->rate) }}</p>
 
-                        <div class="flex gap-1" wire:sort:ignore>
-                            <button type="button" wire:click="edit({{ $item->id }})" class="btn-secondary px-3">Edit</button>
-                            <button type="button" wire:click="toggleActive({{ $item->id }})" class="btn-secondary px-3" title="{{ $item->is_active ? 'Hide from quotations' : 'Show in quotations' }}">
+                        <div class="flex items-center justify-end gap-1.5 w-full sm:w-auto pt-2 sm:pt-0 border-t border-line/60 sm:border-t-0 pl-7 sm:pl-0" wire:sort:ignore>
+                            <button type="button" wire:click="edit({{ $item->id }})" class="btn-secondary !py-1.5 !px-3 text-xs flex-1 sm:flex-none text-center">Edit</button>
+                            <button type="button" wire:click="toggleActive({{ $item->id }})" class="btn-secondary !py-1.5 !px-3 text-xs flex-1 sm:flex-none text-center" title="{{ $item->is_active ? 'Hide from quotations' : 'Show in quotations' }}">
                                 {{ $item->is_active ? 'Hide' : 'Show' }}
                             </button>
-                            <button type="button" wire:click="delete({{ $item->id }})" wire:confirm="Delete {{ $item->name }}?" class="btn-danger px-3" aria-label="Delete {{ $item->name }}">✕</button>
+                            <button type="button" wire:click="delete({{ $item->id }})" wire:confirm="Delete {{ $item->name }}?" class="btn-danger !py-1.5 !px-3 text-xs" aria-label="Delete {{ $item->name }}">✕</button>
                         </div>
                     </li>
                 @endforeach

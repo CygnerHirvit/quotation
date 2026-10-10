@@ -32,6 +32,18 @@ class Create extends Component
         $this->authorize('create', Studio::class);
     }
 
+    public function updatedFormLogo(): void
+    {
+        $this->form->removeLogo = false;
+        $this->validateOnly('form.logo');
+    }
+
+    public function clearSelectedLogo(): void
+    {
+        $this->form->clearLogo();
+        $this->resetValidation('form.logo');
+    }
+
     public function save(): void
     {
         $this->authorize('create', Studio::class);

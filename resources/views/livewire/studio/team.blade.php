@@ -61,32 +61,32 @@
 
     <ul class="card divide-y divide-line">
         @foreach ($members as $member)
-            <li wire:key="member-{{ $member->id }}" class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-                <div class="min-w-0">
-                    <p class="font-medium">
-                        {{ $member->name }}
+            <li wire:key="member-{{ $member->id }}" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-4">
+                <div class="min-w-0 flex-1">
+                    <p class="font-medium text-ink flex items-center gap-1.5 flex-wrap">
+                        <span>{{ $member->name }}</span>
                         @if ($member->id === auth()->id())
                             <span class="text-sm font-normal text-muted">(you)</span>
                         @endif
                         <span @class([
-                            'badge ml-1',
+                            'badge',
                             'bg-brand-50 text-brand-700' => $member->isStudioAdmin(),
                             'bg-canvas text-muted' => ! $member->isStudioAdmin(),
                         ])>{{ $member->role->label() }}</span>
                         @unless ($member->is_active)
-                            <span class="badge ml-1 bg-red-50 text-red-700">Inactive</span>
+                            <span class="badge bg-red-50 text-red-700">Inactive</span>
                         @endunless
                     </p>
-                    <p class="truncate text-sm text-muted">{{ $member->email }}{{ $member->phone ? ' · '.$member->phone : '' }}</p>
+                    <p class="truncate text-xs sm:text-sm text-muted mt-0.5">{{ $member->email }}{{ $member->phone ? ' · '.$member->phone : '' }}</p>
                 </div>
-                <div class="flex gap-2">
-                    <button type="button" wire:click="edit({{ $member->id }})" class="btn-secondary">Edit</button>
+                <div class="flex items-center gap-2 pt-2 sm:pt-0 border-t border-line/60 sm:border-t-0">
+                    <button type="button" wire:click="edit({{ $member->id }})" class="btn-secondary !py-1.5 !px-3 text-xs flex-1 sm:flex-none text-center">Edit</button>
                     @can('changeAccess', $member)
                         <button
                             type="button"
                             wire:click="toggleActive({{ $member->id }})"
                             @if ($member->is_active) wire:confirm="Turn off {{ $member->name }}'s login?" @endif
-                            class="{{ $member->is_active ? 'btn-danger' : 'btn-secondary' }}"
+                            class="{{ $member->is_active ? 'btn-danger' : 'btn-secondary' }} !py-1.5 !px-3 text-xs flex-1 sm:flex-none text-center"
                         >{{ $member->is_active ? 'Deactivate' : 'Activate' }}</button>
                     @endcan
                 </div>

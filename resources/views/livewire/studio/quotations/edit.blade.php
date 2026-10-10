@@ -9,9 +9,9 @@
     <div class="space-y-3">
         <a href="{{ route('studio.dashboard') }}" wire:navigate class="text-sm text-muted hover:text-ink">← All quotations</a>
 
-        <div class="flex flex-wrap items-end justify-between gap-4">
+        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
             <div class="min-w-0">
-                <h1 class="text-3xl font-semibold text-balance">{{ $title }}</h1>
+                <h1 class="text-2xl sm:text-3xl font-semibold text-balance">{{ $title }}</h1>
                 <p class="mt-1 text-sm text-muted">
                     <span class="font-mono font-semibold text-brand-700">{{ $quotation->number }}</span>
                     · {{ $datesTbd ? 'Dates TBD' : ($startDate ? \Illuminate\Support\Carbon::parse($startDate)->format('j M Y') : 'No date') }}
@@ -19,28 +19,41 @@
                 </p>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2 text-sm">
-                <span class="flex items-center gap-1.5 text-muted" aria-live="polite">
-                    <span wire:loading.remove class="size-2 rounded-full bg-emerald-500"></span>
-                    <span wire:loading.remove>All changes saved</span>
-                    <span wire:loading class="size-2 animate-pulse rounded-full bg-amber-500"></span>
-                    <span wire:loading>Saving…</span>
-                </span>
+            {{-- Action Controls & Meta Bar --}}
+            <div x-data="{ copied: false }" class="w-full lg:w-auto space-y-2.5">
+                {{-- Status & Save Indicator Row --}}
+                <div class="flex items-center justify-between lg:justify-end gap-3 text-xs sm:text-sm">
+                    <span class="flex items-center gap-1.5 text-muted" aria-live="polite">
+                        <span wire:loading.remove class="size-2 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span wire:loading.remove class="text-xs font-medium">All changes saved</span>
+                        <span wire:loading class="size-2 animate-pulse rounded-full bg-amber-500 shrink-0"></span>
+                        <span wire:loading class="text-xs font-medium">Saving…</span>
+                    </span>
 
-                <label for="status" class="sr-only">Status</label>
-                <select id="status" wire:model.live="status" class="input w-auto py-2" @disabled($isLocked)>
-                    @unless (in_array($quotation->status, $statuses, true))
-                        <option value="{{ $quotation->status->value }}" disabled>{{ $quotation->status->label() }}</option>
-                    @endunless
-                    @foreach ($statuses as $statusOption)
-                        <option value="{{ $statusOption->value }}">{{ $statusOption->label() }}</option>
-                    @endforeach
-                </select>
+                    <div class="flex items-center gap-2">
+                        <label for="status" class="sr-only">Status</label>
+                        <select
+                            id="status"
+                            wire:model.live="status"
+                            class="input w-auto !py-1.5 !px-3 text-xs sm:text-sm font-semibold rounded-lg bg-surface border-line cursor-pointer"
+                            @disabled($isLocked)
+                        >
+                            @unless (in_array($quotation->status, $statuses, true))
+                                <option value="{{ $quotation->status->value }}" disabled>{{ $quotation->status->label() }}</option>
+                            @endunless
+                            @foreach ($statuses as $statusOption)
+                                <option value="{{ $statusOption->value }}">{{ $statusOption->label() }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
 
-                <div x-data="{ copied: false }" class="flex flex-wrap gap-2">
+                {{-- Action Buttons Row: 2-column grid on mobile (<640px), flex row on tablet/desktop (>=640px) --}}
+                <div class="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end gap-2 text-xs sm:text-sm">
+                    {{-- Copy Share Link --}}
                     <button
                         type="button"
-                        class="btn-secondary"
+                        class="btn-secondary !py-2 !px-3 text-xs sm:text-sm font-medium justify-center"
                         x-on:click="
                             navigator.clipboard.writeText(@js($quotation->publicUrl()))
                                 .then(() => { copied = true; setTimeout(() => copied = false, 2000) })
@@ -48,29 +61,84 @@
                             $wire.markShared()
                         "
                     >
-                        <span x-show="! copied">Copy share link</span>
-                        <span x-show="copied" x-cloak>Link copied ✓</span>
+                        <svg class="size-4 shrink-0 text-muted" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                        </svg>
+                        <span x-show="! copied">Copy link</span>
+                        <span x-show="copied" x-cloak class="text-brand-600 font-semibold">Copied ✓</span>
                     </button>
-                    <a href="{{ $quotation->publicUrl() }}" target="_blank" rel="noopener" class="btn-secondary">View client copy ↗</a>
-                    <a href="{{ $quotation->publicUrl() }}?print=1" target="_blank" rel="noopener" class="btn-secondary" title="Opens the client copy and the print window. Choose “Save as PDF”.">Export PDF</a>
+
+                    {{-- View Copy --}}
+                    <a
+                        href="{{ $quotation->publicUrl() }}"
+                        target="_blank"
+                        rel="noopener"
+                        class="btn-secondary !py-2 !px-3 text-xs sm:text-sm font-medium justify-center"
+                    >
+                        <svg class="size-4 shrink-0 text-muted" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                        </svg>
+                        <span>View copy</span>
+                    </a>
+
+                    {{-- Export PDF --}}
+                    <a
+                        href="{{ $quotation->publicUrl() }}?print=1"
+                        target="_blank"
+                        rel="noopener"
+                        class="btn-secondary !py-2 !px-3 text-xs sm:text-sm font-medium justify-center"
+                        title="Opens the client copy and the print window. Choose “Save as PDF”."
+                    >
+                        <svg class="size-4 shrink-0 text-muted" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                        </svg>
+                        <span>Export PDF</span>
+                    </a>
+
+                    {{-- WhatsApp --}}
                     <a
                         href="{{ $quotation->whatsappUrl() }}"
                         target="_blank"
                         rel="noopener"
                         x-on:click="$wire.markShared()"
-                        class="btn bg-[#25D366] text-white hover:bg-[#1ebe5a]"
+                        class="btn bg-[#25D366] text-white hover:bg-[#1ebe5a] !py-2 !px-3 text-xs sm:text-sm font-semibold justify-center shadow-xs"
                         title="{{ $clientPhone ? 'Send to '.$clientPhone : 'Add the client WhatsApp number to send directly' }}"
-                    >WhatsApp</a>
+                    >
+                        <svg class="size-4 shrink-0 fill-current" viewBox="0 0 24 24">
+                            <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91s-4.45-9.92-9.91-9.92zm5.82 14.03c-.24.67-1.39 1.28-1.92 1.34-.51.05-1.17.07-3.79-.98-3.34-1.35-5.5-4.74-5.67-4.96-.16-.22-1.36-1.81-1.36-3.46 0-1.64.86-2.45 1.17-2.78.3-.33.67-.41.89-.41.22 0 .45 0 .64.01.21.01.49-.08.77.58.29.69.99 2.42 1.08 2.6.09.18.15.4.03.63-.12.24-.18.38-.36.59-.18.21-.38.47-.54.63-.18.18-.37.38-.16.74.21.36.94 1.55 2.01 2.51 1.38 1.23 2.54 1.61 2.9 1.79.36.18.57.15.78-.09.21-.24.9-1.05 1.14-1.41.24-.36.48-.3.81-.18.33.12 2.09.99 2.45 1.17.36.18.6.27.69.42.09.15.09.87-.15 1.54z"/>
+                        </svg>
+                        <span>WhatsApp</span>
+                    </a>
+
+                    {{-- Duplicate --}}
+                    <button
+                        type="button"
+                        wire:click="duplicate"
+                        class="btn-secondary !py-2 !px-3 text-xs sm:text-sm font-medium justify-center"
+                        title="Make a copy with a new number"
+                    >
+                        <svg class="size-4 shrink-0 text-muted" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                        </svg>
+                        <span>Duplicate</span>
+                    </button>
+
+                    {{-- Creator Selector --}}
+                    <div class="relative col-span-1 sm:w-auto">
+                        <label for="created-by" class="sr-only">Created by</label>
+                        <select
+                            id="created-by"
+                            wire:model.live="createdBy"
+                            class="input w-full sm:w-auto !py-2 !px-3 text-xs sm:text-sm font-medium cursor-pointer"
+                            title="Created by"
+                            @disabled($isLocked)
+                        >
+                            @foreach ($team as $member)
+                                <option value="{{ $member->id }}">By {{ $member->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-
-                <button type="button" wire:click="duplicate" class="btn-secondary" title="Make a copy with a new number">Duplicate</button>
-
-                <label for="created-by" class="sr-only">Created by</label>
-                <select id="created-by" wire:model.live="createdBy" class="input w-auto py-2" title="Created by" @disabled($isLocked)>
-                    @foreach ($team as $member)
-                        <option value="{{ $member->id }}">By {{ $member->name }}</option>
-                    @endforeach
-                </select>
             </div>
         </div>
     </div>
@@ -180,7 +248,7 @@
                     @endif
                 </div>
 
-                <div class="grid gap-4 sm:grid-cols-4">
+                <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                     <div>
                         <label for="function-type" class="label">Function type</label>
                         <select id="function-type" wire:model.live="functionType" class="input">
@@ -261,25 +329,29 @@
 
                                 <div class="space-y-2 sm:pl-14" wire:sort:ignore>
                                     @foreach ($event['crew'] as $crewIndex => $crew)
-                                        <div wire:key="crew-{{ $crew['id'] }}" class="flex flex-wrap items-center gap-2">
-                                            <label for="crew-{{ $crew['id'] }}-name" class="sr-only">Crew</label>
-                                            <input id="crew-{{ $crew['id'] }}-name" type="text" wire:model.live.debounce.500ms="events.{{ $eventIndex }}.crew.{{ $crewIndex }}.name" class="input min-w-0 flex-1 py-2">
-
-                                            <div class="flex items-center rounded-lg border border-line">
-                                                <button type="button" wire:click="changeCrewQty({{ $crew['id'] }}, -1)" class="px-3 py-2 text-muted hover:text-ink" aria-label="Less">−</button>
-                                                <span class="w-6 text-center tabular-nums">{{ $crew['qty'] }}</span>
-                                                <button type="button" wire:click="changeCrewQty({{ $crew['id'] }}, 1)" class="px-3 py-2 text-muted hover:text-ink" aria-label="More">+</button>
+                                        <div wire:key="crew-{{ $crew['id'] }}" class="rounded-xl border border-line/60 bg-canvas/30 p-2 sm:border-0 sm:bg-transparent sm:p-0 flex flex-col sm:flex-row sm:items-center gap-2">
+                                            <div class="w-full sm:flex-1 sm:min-w-0">
+                                                <label for="crew-{{ $crew['id'] }}-name" class="sr-only">Crew</label>
+                                                <input id="crew-{{ $crew['id'] }}-name" type="text" wire:model.live.debounce.500ms="events.{{ $eventIndex }}.crew.{{ $crewIndex }}.name" class="input py-2 text-sm sm:text-base font-medium">
                                             </div>
 
-                                            <label for="crew-{{ $crew['id'] }}-rate" class="sr-only">Rate</label>
-                                            <div class="relative w-28">
-                                                <span class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted">₹</span>
-                                                <input id="crew-{{ $crew['id'] }}-rate" type="number" min="0" wire:model.live.debounce.500ms="events.{{ $eventIndex }}.crew.{{ $crewIndex }}.rate" class="input py-2 pl-7 tabular-nums">
+                                            <div class="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+                                                <div class="flex items-center rounded-lg border border-line bg-surface">
+                                                    <button type="button" wire:click="changeCrewQty({{ $crew['id'] }}, -1)" class="px-2.5 py-1.5 sm:py-2 text-muted hover:text-ink text-sm sm:text-base" aria-label="Less">−</button>
+                                                    <span class="w-6 text-center tabular-nums text-sm font-semibold">{{ $crew['qty'] }}</span>
+                                                    <button type="button" wire:click="changeCrewQty({{ $crew['id'] }}, 1)" class="px-2.5 py-1.5 sm:py-2 text-muted hover:text-ink text-sm sm:text-base" aria-label="More">+</button>
+                                                </div>
+
+                                                <label for="crew-{{ $crew['id'] }}-rate" class="sr-only">Rate</label>
+                                                <div class="relative w-24 sm:w-28">
+                                                    <span class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-xs sm:text-sm text-muted">₹</span>
+                                                    <input id="crew-{{ $crew['id'] }}-rate" type="number" min="0" wire:model.live.debounce.500ms="events.{{ $eventIndex }}.crew.{{ $crewIndex }}.rate" class="input py-1.5 sm:py-2 pl-6 sm:pl-7 tabular-nums text-sm sm:text-base">
+                                                </div>
+
+                                                <span class="min-w-20 text-right text-sm font-semibold tabular-nums">{{ Inr::format((int) $crew['qty'] * (int) $crew['rate']) }}</span>
+
+                                                <button type="button" wire:click="removeCrew({{ $crew['id'] }})" class="p-1.5 text-muted hover:text-red-700 shrink-0" aria-label="Remove {{ $crew['name'] }}">✕</button>
                                             </div>
-
-                                            <span class="w-24 text-right text-sm font-semibold tabular-nums">{{ Inr::format((int) $crew['qty'] * (int) $crew['rate']) }}</span>
-
-                                            <button type="button" wire:click="removeCrew({{ $crew['id'] }})" class="px-2 text-muted hover:text-red-700" aria-label="Remove {{ $crew['name'] }}">✕</button>
                                         </div>
                                         @error("events.$eventIndex.crew.$crewIndex.*") <p class="input-error">{{ $message }}</p> @enderror
                                     @endforeach
@@ -342,46 +414,52 @@
                     @else
                         <ul wire:sort="sortItems" class="divide-y divide-line">
                             @foreach ($rows as $itemIndex => $item)
-                                <li wire:key="item-{{ $item['id'] }}" wire:sort:item="{{ $item['id'] }}" @class(['flex flex-wrap items-start gap-3 bg-surface px-4 py-4 sm:px-6', 'opacity-60' => ! $item['included']])>
-                                    <button type="button" wire:sort:handle class="mt-2 cursor-grab text-lg leading-none text-muted" aria-label="Drag to reorder">⋮⋮</button>
+                                <li wire:key="item-{{ $item['id'] }}" wire:sort:item="{{ $item['id'] }}" @class(['flex flex-col sm:flex-row items-start gap-3 bg-surface px-4 py-4 sm:px-6', 'opacity-60' => ! $item['included']])>
+                                    <div class="flex items-start gap-2.5 w-full sm:flex-1 sm:min-w-0">
+                                        <button type="button" wire:sort:handle class="mt-2.5 cursor-grab text-lg leading-none text-muted shrink-0" aria-label="Drag to reorder">⋮⋮</button>
 
-                                    <div class="min-w-0 flex-1 space-y-2" wire:sort:ignore>
-                                        <label for="item-{{ $item['id'] }}-name" class="sr-only">Item name</label>
-                                        <input id="item-{{ $item['id'] }}-name" type="text" wire:model.live.debounce.500ms="items.{{ $section->value }}.{{ $itemIndex }}.name" class="input py-2 font-medium">
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <input aria-label="Note" type="text" wire:model.live.debounce.500ms="items.{{ $section->value }}.{{ $itemIndex }}.note" class="input py-1.5 text-sm" placeholder="Note (e.g. valid for 2 years)">
-                                            <input aria-label="Delivery" type="text" wire:model.live.debounce.500ms="items.{{ $section->value }}.{{ $itemIndex }}.delivery" class="input py-1.5 text-sm" placeholder="Delivery (e.g. 45 days)">
+                                        <div class="min-w-0 flex-1 space-y-2" wire:sort:ignore>
+                                            <label for="item-{{ $item['id'] }}-name" class="sr-only">Item name</label>
+                                            <input id="item-{{ $item['id'] }}-name" type="text" wire:model.live.debounce.500ms="items.{{ $section->value }}.{{ $itemIndex }}.name" class="input py-2 font-medium">
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                <input aria-label="Note" type="text" wire:model.live.debounce.500ms="items.{{ $section->value }}.{{ $itemIndex }}.note" class="input py-1.5 text-sm" placeholder="Note (e.g. valid for 2 years)">
+                                                <input aria-label="Delivery" type="text" wire:model.live.debounce.500ms="items.{{ $section->value }}.{{ $itemIndex }}.delivery" class="input py-1.5 text-sm" placeholder="Delivery (e.g. 45 days)">
+                                            </div>
+                                            @error("items.{$section->value}.$itemIndex.*") <p class="input-error">{{ $message }}</p> @enderror
                                         </div>
-                                        @error("items.{$section->value}.$itemIndex.*") <p class="input-error">{{ $message }}</p> @enderror
                                     </div>
 
-                                    <div class="flex flex-wrap items-center gap-2" wire:sort:ignore>
-                                        <div class="relative w-28">
-                                            <span class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted">₹</span>
-                                            <input aria-label="Rate" type="number" min="0" wire:model.live.debounce.500ms="items.{{ $section->value }}.{{ $itemIndex }}.rate" class="input py-2 pl-7 tabular-nums">
+                                    <div class="flex flex-wrap items-center justify-between sm:justify-start gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t border-line/60 sm:border-t-0 pl-7 sm:pl-0" wire:sort:ignore>
+                                        <div class="flex items-center gap-2">
+                                            <div class="relative w-24 sm:w-28">
+                                                <span class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-xs sm:text-sm text-muted">₹</span>
+                                                <input aria-label="Rate" type="number" min="0" wire:model.live.debounce.500ms="items.{{ $section->value }}.{{ $itemIndex }}.rate" class="input py-1.5 sm:py-2 pl-6 sm:pl-7 tabular-nums text-sm sm:text-base">
+                                            </div>
+
+                                            <div class="flex items-center rounded-lg border border-line bg-surface">
+                                                <button type="button" wire:click="changeItemQty({{ $item['id'] }}, -1)" class="px-2.5 py-1.5 sm:py-2 text-muted hover:text-ink text-sm sm:text-base" aria-label="Less">−</button>
+                                                <span class="w-6 text-center tabular-nums text-sm font-semibold">{{ $item['qty'] }}</span>
+                                                <button type="button" wire:click="changeItemQty({{ $item['id'] }}, 1)" class="px-2.5 py-1.5 sm:py-2 text-muted hover:text-ink text-sm sm:text-base" aria-label="More">+</button>
+                                            </div>
                                         </div>
 
-                                        <div class="flex items-center rounded-lg border border-line">
-                                            <button type="button" wire:click="changeItemQty({{ $item['id'] }}, -1)" class="px-3 py-2 text-muted hover:text-ink" aria-label="Less">−</button>
-                                            <span class="w-6 text-center tabular-nums">{{ $item['qty'] }}</span>
-                                            <button type="button" wire:click="changeItemQty({{ $item['id'] }}, 1)" class="px-3 py-2 text-muted hover:text-ink" aria-label="More">+</button>
+                                        <div class="flex items-center gap-2">
+                                            <span @class(['w-20 sm:w-24 text-right font-semibold tabular-nums text-sm sm:text-base', 'line-through' => ! $item['included']])>{{ Inr::format((int) $item['qty'] * (int) $item['rate']) }}</span>
+
+                                            <button
+                                                type="button"
+                                                wire:click="toggleIncluded({{ $item['id'] }})"
+                                                aria-pressed="{{ $item['included'] ? 'true' : 'false' }}"
+                                                @class([
+                                                    'btn !py-1.5 !px-3 text-xs',
+                                                    'bg-brand-500 text-white hover:bg-brand-600' => $item['included'],
+                                                    'border border-line bg-surface text-muted' => ! $item['included'],
+                                                ])
+                                                title="{{ $item['included'] ? 'Shown to client and counted in the total' : 'Hidden from client and not counted' }}"
+                                            >{{ $item['included'] ? 'Included' : 'Not included' }}</button>
+
+                                            <button type="button" wire:click="removeItem({{ $item['id'] }})" class="p-1.5 text-muted hover:text-red-700" aria-label="Remove {{ $item['name'] }}">✕</button>
                                         </div>
-
-                                        <span @class(['w-24 text-right font-semibold tabular-nums', 'line-through' => ! $item['included']])>{{ Inr::format((int) $item['qty'] * (int) $item['rate']) }}</span>
-
-                                        <button
-                                            type="button"
-                                            wire:click="toggleIncluded({{ $item['id'] }})"
-                                            aria-pressed="{{ $item['included'] ? 'true' : 'false' }}"
-                                            @class([
-                                                'btn px-3',
-                                                'bg-brand-500 text-white hover:bg-brand-600' => $item['included'],
-                                                'border border-line bg-surface text-muted' => ! $item['included'],
-                                            ])
-                                            title="{{ $item['included'] ? 'Shown to client and counted in the total' : 'Hidden from client and not counted' }}"
-                                        >{{ $item['included'] ? 'Included' : 'Not included' }}</button>
-
-                                        <button type="button" wire:click="removeItem({{ $item['id'] }})" class="px-2 text-muted hover:text-red-700" aria-label="Remove {{ $item['name'] }}">✕</button>
                                     </div>
                                 </li>
                             @endforeach

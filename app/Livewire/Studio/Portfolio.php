@@ -29,6 +29,8 @@ class Portfolio extends Component
     /** @var TemporaryUploadedFile|null */
     public $cover = null;
 
+    public bool $removeCover = false;
+
     public bool $isActive = true;
 
     public function mount(): void
@@ -57,21 +59,58 @@ class Portfolio extends Component
 
     public function closeForm(): void
     {
-        $this->reset('editingId', 'type', 'title', 'url', 'cover', 'isActive');
+        $this->reset('editingId', 'type', 'title', 'url', 'cover', 'removeCover', 'isActive');
         $this->resetValidation();
+    }
+
+    public function updatedCover(): void
+    {
+        $this->removeCover = false;
+        $this->validateOnly('cover');
+    }
+
+    public function clearSelectedCover(): void
+    {
+        $this->cover = null;
+        $this->resetValidation('cover');
+    }
+
+    public function markCoverForRemoval(): void
+    {
+        $this->removeCover = true;
+        $this->cover = null;
+        $this->resetValidation('cover');
+    }
+
+    public function undoCoverRemoval(): void
+    {
+        $this->removeCover = false;
+    }
+
+    public function removeCover(): void
+    {
+        $this->markCoverForRemoval();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function rules(): array
+    {
+        return [
+            'type' => ['required', Rule::enum(PortfolioType::class)],
+            'title' => ['required', 'string', 'max:150'],
+            'url' => ['required', 'url:http,https', 'max:500'],
+            'cover' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'isActive' => ['boolean'],
+        ];
     }
 
     public function save(): void
     {
         $this->authorize('manage-studio-content');
 
-        $validated = $this->validate([
-            'type' => ['required', Rule::enum(PortfolioType::class)],
-            'title' => ['required', 'string', 'max:150'],
-            'url' => ['required', 'url:http,https', 'max:500'],
-            'cover' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
-            'isActive' => ['boolean'],
-        ]);
+        $validated = $this->validate();
 
         $item = $this->editingId ? PortfolioItem::findOrFail($this->editingId) : new PortfolioItem(['type' => $validated['type']]);
 
@@ -81,11 +120,20 @@ class Portfolio extends Component
             'is_active' => $validated['isActive'],
         ]);
 
-        if ($this->cover !== null) {
+        if ($this->removeCover) {
+            if ($item->cover_path) {
+                $previous = $item->cover_path;
+                $item->cover_path = null;
+
+                if (Storage::disk('public')->exists($previous)) {
+                    Storage::disk('public')->delete($previous);
+                }
+            }
+        } elseif ($this->cover !== null) {
             $previous = $item->cover_path;
             $item->cover_path = $this->cover->store('studios/portfolio', 'public');
 
-            if ($previous) {
+            if ($previous && Storage::disk('public')->exists($previous)) {
                 Storage::disk('public')->delete($previous);
             }
         }
@@ -95,18 +143,6 @@ class Portfolio extends Component
         session()->flash('status', $this->editingId ? "{$item->title} updated." : "{$item->title} added.");
 
         $this->closeForm();
-    }
-
-    public function removeCover(): void
-    {
-        $this->authorize('manage-studio-content');
-
-        $item = PortfolioItem::findOrFail((int) $this->editingId);
-
-        if ($item->cover_path) {
-            Storage::disk('public')->delete($item->cover_path);
-            $item->update(['cover_path' => null]);
-        }
     }
 
     public function toggleActive(int $itemId): void

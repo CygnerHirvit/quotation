@@ -36,37 +36,39 @@
 
         <ul class="divide-y divide-line">
             @foreach ($users as $studioUser)
-                <li wire:key="user-{{ $studioUser->id }}" class="space-y-3 px-6 py-4">
-                    <div class="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                            <p class="font-medium">
-                                {{ $studioUser->name }}
-                                <span class="badge ml-1 bg-canvas text-muted">{{ $studioUser->role->label() }}</span>
+                <li wire:key="user-{{ $studioUser->id }}" class="space-y-3 px-4 sm:px-6 py-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <p class="font-medium text-ink flex items-center gap-1.5 flex-wrap">
+                                <span>{{ $studioUser->name }}</span>
+                                <span class="badge bg-canvas text-muted">{{ $studioUser->role->label() }}</span>
                                 @unless ($studioUser->is_active)
-                                    <span class="badge ml-1 bg-red-50 text-red-700">Inactive</span>
+                                    <span class="badge bg-red-50 text-red-700">Inactive</span>
                                 @endunless
                             </p>
-                            <p class="text-sm text-muted">{{ $studioUser->email }}</p>
+                            <p class="truncate text-xs sm:text-sm text-muted mt-0.5">{{ $studioUser->email }}</p>
                         </div>
-                        <div class="flex gap-2">
-                            <button type="button" wire:click="startPasswordReset({{ $studioUser->id }})" class="btn-secondary">Reset password</button>
+                        <div class="flex items-center gap-2 pt-2 sm:pt-0 border-t border-line/60 sm:border-t-0">
+                            <button type="button" wire:click="startPasswordReset({{ $studioUser->id }})" class="btn-secondary !py-1.5 !px-3 text-xs flex-1 sm:flex-none text-center">Reset password</button>
                             <button
                                 type="button"
                                 wire:click="toggleUserActive({{ $studioUser->id }})"
-                                class="{{ $studioUser->is_active ? 'btn-danger' : 'btn-secondary' }}"
+                                class="{{ $studioUser->is_active ? 'btn-danger' : 'btn-secondary' }} !py-1.5 !px-3 text-xs flex-1 sm:flex-none text-center"
                             >{{ $studioUser->is_active ? 'Deactivate' : 'Activate' }}</button>
                         </div>
                     </div>
 
                     @if ($passwordUserId === $studioUser->id)
-                        <form wire:submit="savePassword" class="flex flex-wrap items-start gap-3 rounded-xl bg-canvas p-4">
+                        <form wire:submit="savePassword" class="flex flex-col sm:flex-row items-stretch sm:items-start gap-2.5 rounded-xl bg-canvas p-4">
                             <div class="min-w-0 flex-1">
                                 <label for="new-password" class="sr-only">New password</label>
-                                <input id="new-password" type="text" wire:model="newPassword" placeholder="New password (min 8 characters)" class="input font-mono" autocomplete="new-password">
+                                <input id="new-password" type="text" wire:model="newPassword" placeholder="New password (min 8 characters)" class="input font-mono !py-2 text-sm" autocomplete="new-password">
                                 @error('newPassword') <p class="input-error">{{ $message }}</p> @enderror
                             </div>
-                            <button type="submit" class="btn-primary">Save password</button>
-                            <button type="button" wire:click="cancelPasswordReset" class="btn-secondary">Cancel</button>
+                            <div class="flex items-center gap-2">
+                                <button type="submit" class="btn-primary !py-2 !px-3.5 text-xs flex-1 sm:flex-none text-center">Save password</button>
+                                <button type="button" wire:click="cancelPasswordReset" class="btn-secondary !py-2 !px-3 text-xs flex-1 sm:flex-none text-center">Cancel</button>
+                            </div>
                         </form>
                     @endif
                 </li>

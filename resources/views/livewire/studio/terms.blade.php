@@ -57,18 +57,20 @@
         @else
             <ol wire:sort="sort" class="divide-y divide-line">
                 @foreach ($terms as $term)
-                    <li wire:key="term-{{ $term->id }}" wire:sort:item="{{ $term->id }}" class="flex items-start gap-3 bg-surface px-4 py-4">
-                        <button type="button" wire:sort:handle class="cursor-grab px-1 text-lg leading-none text-muted" aria-label="Drag to reorder">⋮⋮</button>
-                        <span class="w-6 shrink-0 pt-0.5 text-sm font-semibold text-muted tabular-nums">{{ $loop->iteration }}</span>
-                        <div class="min-w-0 flex-1">
-                            @if ($term->title)
-                                <p class="font-semibold">{{ $term->title }}</p>
-                            @endif
-                            <p class="text-sm whitespace-pre-line text-muted">{{ $term->body }}</p>
+                    <li wire:key="term-{{ $term->id }}" wire:sort:item="{{ $term->id }}" class="flex flex-col sm:flex-row items-start gap-3 bg-surface px-4 py-4">
+                        <div class="flex items-start gap-2.5 min-w-0 flex-1 w-full">
+                            <button type="button" wire:sort:handle class="cursor-grab px-1 text-lg leading-none text-muted shrink-0" aria-label="Drag to reorder">⋮⋮</button>
+                            <span class="w-6 shrink-0 pt-0.5 text-sm font-semibold text-muted tabular-nums">{{ $loop->iteration }}</span>
+                            <div class="min-w-0 flex-1">
+                                @if ($term->title)
+                                    <p class="font-semibold text-ink">{{ $term->title }}</p>
+                                @endif
+                                <p class="text-sm whitespace-pre-line text-muted">{{ $term->body }}</p>
+                            </div>
                         </div>
-                        <div class="flex gap-1" wire:sort:ignore>
-                            <button type="button" wire:click="edit({{ $term->id }})" class="btn-secondary px-3">Edit</button>
-                            <button type="button" wire:click="delete({{ $term->id }})" wire:confirm="Delete this term?" class="btn-danger px-3" aria-label="Delete term">✕</button>
+                        <div class="flex items-center justify-end gap-1.5 w-full sm:w-auto pt-2 sm:pt-0 border-t border-line/60 sm:border-t-0 pl-8 sm:pl-0" wire:sort:ignore>
+                            <button type="button" wire:click="edit({{ $term->id }})" class="btn-secondary !py-1.5 !px-3 text-xs flex-1 sm:flex-none text-center">Edit</button>
+                            <button type="button" wire:click="delete({{ $term->id }})" wire:confirm="Delete this term?" class="btn-danger !py-1.5 !px-3 text-xs" aria-label="Delete term">✕</button>
                         </div>
                     </li>
                 @endforeach

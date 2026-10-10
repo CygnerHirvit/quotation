@@ -32,6 +32,8 @@ class StudioForm extends Form
     /** @var TemporaryUploadedFile|null */
     public $logo = null;
 
+    public bool $removeLogo = false;
+
     public function setStudio(Studio $studio): void
     {
         $this->studio = $studio;
@@ -42,6 +44,8 @@ class StudioForm extends Form
         $this->quotePrefix = $studio->quote_prefix;
         $this->theme = $studio->theme->value;
         $this->status = $studio->status->value;
+        $this->logo = null;
+        $this->removeLogo = false;
     }
 
     /**
@@ -66,7 +70,26 @@ class StudioForm extends Form
      */
     protected function validationAttributes(): array
     {
-        return ['quotePrefix' => 'quotation prefix'];
+        return [
+            'quotePrefix' => 'quotation prefix',
+            'logo' => 'studio logo',
+        ];
+    }
+
+    public function clearLogo(): void
+    {
+        $this->logo = null;
+    }
+
+    public function markLogoForRemoval(): void
+    {
+        $this->removeLogo = true;
+        $this->logo = null;
+    }
+
+    public function undoLogoRemoval(): void
+    {
+        $this->removeLogo = false;
     }
 
     /**
@@ -88,19 +111,31 @@ class StudioForm extends Form
             'status' => $this->status,
         ]);
 
-        if ($this->logo !== null) {
-            $previousLogo = $studio->logo_path;
-            $studio->logo_path = $this->logo->store('studios/logos', 'public');
+        $studio->save();
 
-            if ($previousLogo !== null) {
-                Storage::disk('public')->delete($previousLogo);
+        if ($this->removeLogo) {
+            if ($studio->logo_path) {
+                $previous = $studio->logo_path;
+                $studio->update(['logo_path' => null]);
+
+                if (Storage::disk('public')->exists($previous)) {
+                    Storage::disk('public')->delete($previous);
+                }
+            }
+        } elseif ($this->logo !== null) {
+            $previous = $studio->logo_path;
+            $path = $this->logo->store('studios/logos', 'public');
+            $studio->update(['logo_path' => $path]);
+
+            if ($previous && Storage::disk('public')->exists($previous)) {
+                Storage::disk('public')->delete($previous);
             }
         }
 
-        $studio->save();
-
+        $studio->refresh();
         $this->studio = $studio;
         $this->logo = null;
+        $this->removeLogo = false;
 
         return $studio;
     }

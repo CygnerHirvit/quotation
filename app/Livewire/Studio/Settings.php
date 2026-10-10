@@ -25,6 +25,55 @@ class Settings extends Component
         $this->form->setStudio($studio);
     }
 
+    public function updatedFormLogo(): void
+    {
+        $this->form->removeLogo = false;
+        $this->validateOnly('form.logo');
+    }
+
+    public function updatedFormCoverWedding(): void
+    {
+        $this->form->removeCoverWedding = false;
+        $this->validateOnly('form.coverWedding');
+    }
+
+    public function updatedFormCoverCorporate(): void
+    {
+        $this->form->removeCoverCorporate = false;
+        $this->validateOnly('form.coverCorporate');
+    }
+
+    public function clearSelectedImage(string $property): void
+    {
+        $this->form->clearSelected($property);
+        $this->resetValidation("form.{$property}");
+    }
+
+    public function markImageForRemoval(string $property): void
+    {
+        $this->form->markForRemoval($property);
+        $this->resetValidation("form.{$property}");
+    }
+
+    public function undoImageRemoval(string $property): void
+    {
+        $this->form->undoRemoval($property);
+    }
+
+    public function removeImage(string $column): void
+    {
+        $property = match ($column) {
+            'logo_path' => 'logo',
+            'cover_wedding_path' => 'coverWedding',
+            'cover_corporate_path' => 'coverCorporate',
+            default => null,
+        };
+
+        if ($property) {
+            $this->markImageForRemoval($property);
+        }
+    }
+
     public function save(): void
     {
         $this->authorize('manageSettings', $this->form->studio);
@@ -32,15 +81,6 @@ class Settings extends Component
         $this->form->save();
 
         session()->flash('status', 'Settings saved.');
-    }
-
-    public function removeImage(string $column): void
-    {
-        $this->authorize('manageSettings', $this->form->studio);
-
-        $this->form->removeImage($column);
-
-        session()->flash('status', 'Image removed.');
     }
 
     public function resetWhatsappMessage(): void

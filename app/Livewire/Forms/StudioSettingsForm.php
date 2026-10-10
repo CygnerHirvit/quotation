@@ -54,6 +54,12 @@ class StudioSettingsForm extends Form
     /** @var TemporaryUploadedFile|null */
     public $coverCorporate = null;
 
+    public bool $removeLogo = false;
+
+    public bool $removeCoverWedding = false;
+
+    public bool $removeCoverCorporate = false;
+
     public function setStudio(Studio $studio): void
     {
         $this->studio = $studio;
@@ -71,6 +77,12 @@ class StudioSettingsForm extends Form
         $this->showBreakdownDefault = $studio->show_breakdown_default;
         $this->whatsappMessage = $studio->whatsappTemplate();
         $this->notifyEmailOnAccept = (bool) $studio->notify_email_on_accept;
+        $this->logo = null;
+        $this->coverWedding = null;
+        $this->coverCorporate = null;
+        $this->removeLogo = false;
+        $this->removeCoverWedding = false;
+        $this->removeCoverCorporate = false;
     }
 
     /**
@@ -149,40 +161,71 @@ class StudioSettingsForm extends Form
             'notify_email_on_accept' => $this->notifyEmailOnAccept,
         ]);
 
-        $this->replaceImage('logo', 'logo_path', 'studios/logos');
-        $this->replaceImage('coverWedding', 'cover_wedding_path', 'studios/covers');
-        $this->replaceImage('coverCorporate', 'cover_corporate_path', 'studios/covers');
+        $this->processImage('logo', 'removeLogo', 'logo_path', 'studios/logos');
+        $this->processImage('coverWedding', 'removeCoverWedding', 'cover_wedding_path', 'studios/covers');
+        $this->processImage('coverCorporate', 'removeCoverCorporate', 'cover_corporate_path', 'studios/covers');
 
         $this->studio->save();
+
+        $this->logo = null;
+        $this->coverWedding = null;
+        $this->coverCorporate = null;
+        $this->removeLogo = false;
+        $this->removeCoverWedding = false;
+        $this->removeCoverCorporate = false;
     }
 
-    public function removeImage(string $column): void
+    public function clearSelected(string $property): void
     {
-        if (! in_array($column, ['logo_path', 'cover_wedding_path', 'cover_corporate_path'], true)) {
-            return;
-        }
-
-        if ($this->studio->{$column}) {
-            Storage::disk('public')->delete($this->studio->{$column});
-            $this->studio->update([$column => null]);
+        if (in_array($property, ['logo', 'coverWedding', 'coverCorporate'], true)) {
+            $this->{$property} = null;
         }
     }
 
-    /**
-     * Store a newly uploaded image and delete the one it replaces.
-     */
-    protected function replaceImage(string $property, string $column, string $directory): void
+    public function markForRemoval(string $property): void
     {
-        if ($this->{$property} === null) {
-            return;
+        $removeProperty = 'remove'.ucfirst($property);
+        if (property_exists($this, $removeProperty)) {
+            $this->{$removeProperty} = true;
+            $this->{$property} = null;
         }
+    }
 
-        $previous = $this->studio->{$column};
-        $this->studio->{$column} = $this->{$property}->store($directory, 'public');
-        $this->{$property} = null;
+    public function undoRemoval(string $property): void
+    {
+        $removeProperty = 'remove'.ucfirst($property);
+        if (property_exists($this, $removeProperty)) {
+            $this->{$removeProperty} = false;
+        }
+    }
 
-        if ($previous) {
-            Storage::disk('public')->delete($previous);
+    public function isMarkedForRemoval(string $property): bool
+    {
+        $removeProperty = 'remove'.ucfirst($property);
+
+        return property_exists($this, $removeProperty) && (bool) $this->{$removeProperty};
+    }
+
+    protected function processImage(string $property, string $removeProperty, string $column, string $directory): void
+    {
+        if ($this->{$removeProperty}) {
+            if ($this->studio->{$column}) {
+                $previous = $this->studio->{$column};
+                $this->studio->{$column} = null;
+
+                if (Storage::disk('public')->exists($previous)) {
+                    Storage::disk('public')->delete($previous);
+                }
+            }
+        } elseif ($this->{$property} !== null) {
+            $previous = $this->studio->{$column};
+            $path = $this->{$property}->store($directory, 'public');
+
+            $this->studio->{$column} = $path;
+
+            if ($previous && Storage::disk('public')->exists($previous)) {
+                Storage::disk('public')->delete($previous);
+            }
         }
     }
 }
