@@ -36,5 +36,9 @@ class AppServiceProvider extends ServiceProvider
         // Price list, portfolio and term templates are managed by studio admins. Records are already limited
         // to the user's studio by the BelongsToStudio scope.
         Gate::define('manage-studio-content', fn (User $user): bool => $user->isStudioAdmin());
+
+        if ($this->app->environment('production') || str_starts_with((string) config('app.url'), 'https://')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
     }
 }

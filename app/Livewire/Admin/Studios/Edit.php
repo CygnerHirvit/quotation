@@ -70,6 +70,8 @@ class Edit extends Component
 
         $this->studio = $this->form->save();
 
+        $this->dispatch('saved');
+
         session()->flash('status', 'Studio details saved.');
     }
 

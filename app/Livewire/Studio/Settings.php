@@ -80,6 +80,8 @@ class Settings extends Component
 
         $this->form->save();
 
+        $this->dispatch('saved');
+
         session()->flash('status', 'Settings saved.');
     }
 

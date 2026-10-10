@@ -61,6 +61,7 @@ class Portfolio extends Component
     {
         $this->reset('editingId', 'type', 'title', 'url', 'cover', 'removeCover', 'isActive');
         $this->resetValidation();
+        $this->dispatch('saved');
     }
 
     public function updatedCover(): void

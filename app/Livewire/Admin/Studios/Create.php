@@ -44,6 +44,17 @@ class Create extends Component
         $this->resetValidation('form.logo');
     }
 
+    public function markLogoForRemoval(): void
+    {
+        $this->form->markLogoForRemoval();
+        $this->resetValidation('form.logo');
+    }
+
+    public function undoLogoRemoval(): void
+    {
+        $this->form->undoLogoRemoval();
+    }
+
     public function save(): void
     {
         $this->authorize('create', Studio::class);
