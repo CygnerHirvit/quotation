@@ -78,7 +78,7 @@ class Quotation extends Model
                 'number' => self::nextNumber($studio),
                 'function_type' => $functionType,
                 'function_side' => $functionType === FunctionType::Corporate ? null : FunctionSide::BothSides,
-                'city' => $studio->city,
+                'city' => "",
                 'dates_tbd' => true,
                 'discount_percent' => 0,
                 'gst_percent' => $studio->gst_percent,

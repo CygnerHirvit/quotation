@@ -8,7 +8,7 @@
 
     <div>
         <label for="form-city" class="label">City</label>
-        <input id="form-city" type="text" wire:model="form.city" class="input" placeholder="Rajkot">
+        <input id="form-city" type="text" wire:model="form.city" class="input" placeholder="">
         @error('form.city') <p class="input-error">{{ $message }}</p> @enderror
     </div>
 

@@ -117,35 +117,35 @@
                     @if ($isCorporate)
                         <div class="sm:col-span-2">
                             <label for="client-name" class="label">Company / client name</label>
-                            <input id="client-name" type="text" wire:model.blur="clientName" class="input">
+                            <input id="client-name" type="text" wire:model.live.debounce.500ms="clientName" class="input">
                             @error('clientName') <p class="input-error">{{ $message }}</p> @enderror
                         </div>
                     @else
                         <div>
                             <label for="bride" class="label">Bride</label>
-                            <input id="bride" type="text" wire:model.blur="bride" class="input" placeholder="Bride's name">
+                            <input id="bride" type="text" wire:model.live.debounce.500ms="bride" class="input" placeholder="Bride's name">
                             @error('bride') <p class="input-error">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="groom" class="label">Groom</label>
-                            <input id="groom" type="text" wire:model.blur="groom" class="input" placeholder="Groom's name">
+                            <input id="groom" type="text" wire:model.live.debounce.500ms="groom" class="input" placeholder="Groom's name">
                             @error('groom') <p class="input-error">{{ $message }}</p> @enderror
                         </div>
                     @endif
 
                     <div>
                         <label for="venue" class="label">Venue</label>
-                        <input id="venue" type="text" wire:model.blur="venue" class="input">
+                        <input id="venue" type="text" wire:model.live.debounce.500ms="venue" class="input">
                         @error('venue') <p class="input-error">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label for="city" class="label">City</label>
-                        <input id="city" type="text" wire:model.blur="city" class="input">
+                        <input id="city" type="text" wire:model.live.debounce.500ms="city" class="input">
                         @error('city') <p class="input-error">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label for="client-phone" class="label">Client WhatsApp number</label>
-                        <input id="client-phone" type="tel" wire:model.blur="clientPhone" class="input" placeholder="+91 98765 43210">
+                        <input id="client-phone" type="tel" wire:model.live.debounce.500ms="clientPhone" class="input" placeholder="+91 98765 43210">
                         @error('clientPhone') <p class="input-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -168,12 +168,12 @@
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
                                 <label for="start-date" class="label">From</label>
-                                <input id="start-date" type="date" wire:model.blur="startDate" class="input">
+                                <input id="start-date" type="date" wire:model.live="startDate" class="input">
                                 @error('startDate') <p class="input-error">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label for="end-date" class="label">To (optional)</label>
-                                <input id="end-date" type="date" wire:model.blur="endDate" class="input">
+                                <input id="end-date" type="date" wire:model.live="endDate" class="input">
                                 @error('endDate') <p class="input-error">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -206,7 +206,7 @@
                     </div>
                     <div>
                         <label for="valid-until" class="label">Valid until</label>
-                        <input id="valid-until" type="date" wire:model.blur="validUntil" class="input">
+                        <input id="valid-until" type="date" wire:model.live="validUntil" class="input">
                         @error('validUntil') <p class="input-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -243,16 +243,16 @@
                                     <div class="grid min-w-0 flex-1 gap-3 sm:grid-cols-3" wire:sort:ignore>
                                         <div>
                                             <label for="event-{{ $event['id'] }}-name" class="sr-only">Function name</label>
-                                            <input id="event-{{ $event['id'] }}-name" type="text" wire:model.blur="events.{{ $eventIndex }}.name" class="input font-semibold" placeholder="Function name">
+                                            <input id="event-{{ $event['id'] }}-name" type="text" wire:model.live.debounce.500ms="events.{{ $eventIndex }}.name" class="input font-semibold" placeholder="Function name">
                                             @error("events.$eventIndex.name") <p class="input-error">{{ $message }}</p> @enderror
                                         </div>
                                         <div>
                                             <label for="event-{{ $event['id'] }}-date" class="sr-only">Date</label>
-                                            <input id="event-{{ $event['id'] }}-date" type="date" wire:model.blur="events.{{ $eventIndex }}.date" class="input" title="Leave empty if the date is not decided">
+                                            <input id="event-{{ $event['id'] }}-date" type="date" wire:model.live="events.{{ $eventIndex }}.date" class="input" title="Leave empty if the date is not decided">
                                         </div>
                                         <div>
                                             <label for="event-{{ $event['id'] }}-venue" class="sr-only">Venue</label>
-                                            <input id="event-{{ $event['id'] }}-venue" type="text" wire:model.blur="events.{{ $eventIndex }}.venue" class="input" placeholder="Venue / city">
+                                            <input id="event-{{ $event['id'] }}-venue" type="text" wire:model.live.debounce.500ms="events.{{ $eventIndex }}.venue" class="input" placeholder="Venue / city">
                                         </div>
                                     </div>
 
@@ -263,7 +263,7 @@
                                     @foreach ($event['crew'] as $crewIndex => $crew)
                                         <div wire:key="crew-{{ $crew['id'] }}" class="flex flex-wrap items-center gap-2">
                                             <label for="crew-{{ $crew['id'] }}-name" class="sr-only">Crew</label>
-                                            <input id="crew-{{ $crew['id'] }}-name" type="text" wire:model.blur="events.{{ $eventIndex }}.crew.{{ $crewIndex }}.name" class="input min-w-0 flex-1 py-2">
+                                            <input id="crew-{{ $crew['id'] }}-name" type="text" wire:model.live.debounce.500ms="events.{{ $eventIndex }}.crew.{{ $crewIndex }}.name" class="input min-w-0 flex-1 py-2">
 
                                             <div class="flex items-center rounded-lg border border-line">
                                                 <button type="button" wire:click="changeCrewQty({{ $crew['id'] }}, -1)" class="px-3 py-2 text-muted hover:text-ink" aria-label="Less">−</button>
@@ -274,7 +274,7 @@
                                             <label for="crew-{{ $crew['id'] }}-rate" class="sr-only">Rate</label>
                                             <div class="relative w-28">
                                                 <span class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted">₹</span>
-                                                <input id="crew-{{ $crew['id'] }}-rate" type="number" min="0" wire:model.blur="events.{{ $eventIndex }}.crew.{{ $crewIndex }}.rate" class="input py-2 pl-7 tabular-nums">
+                                                <input id="crew-{{ $crew['id'] }}-rate" type="number" min="0" wire:model.live.debounce.500ms="events.{{ $eventIndex }}.crew.{{ $crewIndex }}.rate" class="input py-2 pl-7 tabular-nums">
                                             </div>
 
                                             <span class="w-24 text-right text-sm font-semibold tabular-nums">{{ Inr::format((int) $crew['qty'] * (int) $crew['rate']) }}</span>
@@ -347,10 +347,10 @@
 
                                     <div class="min-w-0 flex-1 space-y-2" wire:sort:ignore>
                                         <label for="item-{{ $item['id'] }}-name" class="sr-only">Item name</label>
-                                        <input id="item-{{ $item['id'] }}-name" type="text" wire:model.blur="items.{{ $section->value }}.{{ $itemIndex }}.name" class="input py-2 font-medium">
+                                        <input id="item-{{ $item['id'] }}-name" type="text" wire:model.live.debounce.500ms="items.{{ $section->value }}.{{ $itemIndex }}.name" class="input py-2 font-medium">
                                         <div class="grid grid-cols-2 gap-2">
-                                            <input aria-label="Note" type="text" wire:model.blur="items.{{ $section->value }}.{{ $itemIndex }}.note" class="input py-1.5 text-sm" placeholder="Note (e.g. valid for 2 years)">
-                                            <input aria-label="Delivery" type="text" wire:model.blur="items.{{ $section->value }}.{{ $itemIndex }}.delivery" class="input py-1.5 text-sm" placeholder="Delivery (e.g. 45 days)">
+                                            <input aria-label="Note" type="text" wire:model.live.debounce.500ms="items.{{ $section->value }}.{{ $itemIndex }}.note" class="input py-1.5 text-sm" placeholder="Note (e.g. valid for 2 years)">
+                                            <input aria-label="Delivery" type="text" wire:model.live.debounce.500ms="items.{{ $section->value }}.{{ $itemIndex }}.delivery" class="input py-1.5 text-sm" placeholder="Delivery (e.g. 45 days)">
                                         </div>
                                         @error("items.{$section->value}.$itemIndex.*") <p class="input-error">{{ $message }}</p> @enderror
                                     </div>
@@ -358,7 +358,7 @@
                                     <div class="flex flex-wrap items-center gap-2" wire:sort:ignore>
                                         <div class="relative w-28">
                                             <span class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted">₹</span>
-                                            <input aria-label="Rate" type="number" min="0" wire:model.blur="items.{{ $section->value }}.{{ $itemIndex }}.rate" class="input py-2 pl-7 tabular-nums">
+                                            <input aria-label="Rate" type="number" min="0" wire:model.live.debounce.500ms="items.{{ $section->value }}.{{ $itemIndex }}.rate" class="input py-2 pl-7 tabular-nums">
                                         </div>
 
                                         <div class="flex items-center rounded-lg border border-line">
@@ -423,8 +423,8 @@
                                 <button type="button" wire:sort:handle class="mt-2 cursor-grab text-lg leading-none text-muted" aria-label="Drag to reorder">⋮⋮</button>
                                 <span class="mt-2 w-5 shrink-0 text-sm font-semibold text-muted tabular-nums">{{ $termIndex + 1 }}</span>
                                 <div class="min-w-0 flex-1 space-y-2" wire:sort:ignore>
-                                    <input aria-label="Term title" type="text" wire:model.blur="terms.{{ $termIndex }}.title" class="input py-2 font-semibold" placeholder="Title (optional)">
-                                    <textarea aria-label="Term text" wire:model.blur="terms.{{ $termIndex }}.body" rows="2" class="input py-2 text-sm"></textarea>
+                                    <input aria-label="Term title" type="text" wire:model.live.debounce.500ms="terms.{{ $termIndex }}.title" class="input py-2 font-semibold" placeholder="Title (optional)">
+                                    <textarea aria-label="Term text" wire:model.live.debounce.500ms="terms.{{ $termIndex }}.body" rows="2" class="input py-2 text-sm"></textarea>
                                     @error("terms.$termIndex.body") <p class="input-error">{{ $message }}</p> @enderror
                                 </div>
                                 <button type="button" wire:click="removeTerm({{ $term['id'] }})" class="mt-2 px-2 text-muted hover:text-red-700" aria-label="Remove term" wire:sort:ignore>✕</button>
@@ -438,7 +438,7 @@
             <section class="card space-y-3 p-6">
                 <label for="internal-notes" class="text-lg font-semibold">Internal notes</label>
                 <p class="text-sm text-muted">Only your team sees these.</p>
-                <textarea id="internal-notes" wire:model.blur="internalNotes" rows="3" class="input"></textarea>
+                <textarea id="internal-notes" wire:model.live.debounce.500ms="internalNotes" rows="3" class="input"></textarea>
                 @error('internalNotes') <p class="input-error">{{ $message }}</p> @enderror
             </section>
         </div>
@@ -456,11 +456,11 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label for="discount" class="label text-xs tracking-wide text-muted uppercase">Discount %</label>
-                    <input id="discount" type="number" min="0" max="100" step="0.01" wire:model.blur="discountPercent" class="input py-2">
+                    <input id="discount" type="number" min="0" max="100" step="0.01" wire:model.live.debounce.500ms="discountPercent" class="input py-2">
                 </div>
                 <div>
                     <label for="gst" class="label text-xs tracking-wide text-muted uppercase">GST %</label>
-                    <input id="gst" type="number" min="0" max="100" step="0.01" wire:model.blur="gstPercent" class="input py-2" @disabled($gstMode !== 'included')>
+                    <input id="gst" type="number" min="0" max="100" step="0.01" wire:model.live.debounce.500ms="gstPercent" class="input py-2" @disabled($gstMode !== 'included')>
                 </div>
                 <div class="col-span-2">
                     <label for="gst-mode" class="sr-only">GST handling</label>
@@ -506,7 +506,7 @@
                 <label for="manual-total" class="label text-sm">Final amount (optional)</label>
                 <div class="relative">
                     <span class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted">₹</span>
-                    <input id="manual-total" type="number" min="0" wire:model.blur="manualTotal" class="input py-2 pl-7 tabular-nums" placeholder="Use calculated total">
+                    <input id="manual-total" type="number" min="0" wire:model.live.debounce.500ms="manualTotal" class="input py-2 pl-7 tabular-nums" placeholder="Use calculated total">
                 </div>
                 @error('manualTotal') <p class="input-error">{{ $message }}</p> @enderror
                 <div class="flex gap-3 text-xs font-semibold">
