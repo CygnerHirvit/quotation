@@ -66,6 +66,7 @@ class Settings extends Component
             'logo_path' => 'logo',
             'cover_wedding_path' => 'coverWedding',
             'cover_corporate_path' => 'coverCorporate',
+            'authorized_signature_path' => 'authorizedSignature',
             default => null,
         };
 

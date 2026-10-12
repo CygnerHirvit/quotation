@@ -4,6 +4,9 @@
 
 <title>{{ isset($title) ? $title.' · ' : '' }}{{ config('app.name') }}</title>
 
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link rel="stylesheet" href="https://fonts.bunny.net/css?family=dancing-script:600,700&display=swap">
+
 @fonts
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @livewireStyles

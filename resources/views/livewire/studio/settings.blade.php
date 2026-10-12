@@ -59,6 +59,264 @@
             </div>
         </section>
 
+        {{-- Authorized E-Signature --}}
+        <section class="card space-y-5 p-5 sm:p-7"
+                 x-data="{
+                     openPad: false,
+                     mode: 'draw',
+                     typedName: '{{ $form->signatureName ?: $studio->name }}',
+                     hasInk: false,
+                     drawing: false,
+                     context: null,
+                     ratio: window.devicePixelRatio || 1,
+                     init() {
+                         this.$watch('openPad', val => {
+                             if (val) {
+                                 this.$nextTick(() => {
+                                     this.resizeCanvas();
+                                     setTimeout(() => this.resizeCanvas(), 60);
+                                 });
+                             }
+                         });
+                         window.addEventListener('resize', () => {
+                             if (this.openPad && this.mode === 'draw' && !this.hasInk) {
+                                 this.resizeCanvas();
+                             }
+                         });
+                     },
+                     resizeCanvas() {
+                         const canvas = this.$refs.sigCanvas;
+                         if (!canvas) return;
+                         if (!this.context) {
+                             this.context = canvas.getContext('2d');
+                         }
+                         const box = canvas.getBoundingClientRect();
+                         const width = Math.floor(box.width) || 420;
+                         const height = 140;
+                         canvas.width = width * this.ratio;
+                         canvas.height = height * this.ratio;
+                         this.context.setTransform(this.ratio, 0, 0, this.ratio, 0, 0);
+                         this.context.lineWidth = 2.4;
+                         this.context.lineCap = 'round';
+                         this.context.lineJoin = 'round';
+                         this.context.strokeStyle = '#111827';
+                         this.hasInk = false;
+                     },
+                     getPos(e) {
+                         const box = this.$refs.sigCanvas.getBoundingClientRect();
+                         return { x: e.clientX - box.left, y: e.clientY - box.top };
+                     },
+                     startDraw(e) {
+                         this.drawing = true;
+                         try { this.$refs.sigCanvas.setPointerCapture(e.pointerId); } catch (_) {}
+                         const pos = this.getPos(e);
+                         this.context.beginPath();
+                         this.context.moveTo(pos.x, pos.y);
+                         this.context.lineTo(pos.x + 0.1, pos.y + 0.1);
+                         this.context.stroke();
+                         this.hasInk = true;
+                     },
+                     moveDraw(e) {
+                         if (!this.drawing) return;
+                         const pos = this.getPos(e);
+                         this.context.lineTo(pos.x, pos.y);
+                         this.context.stroke();
+                     },
+                     endDraw(e) {
+                         this.drawing = false;
+                         if (e && e.pointerId) {
+                             try { this.$refs.sigCanvas.releasePointerCapture(e.pointerId); } catch (_) {}
+                         }
+                     },
+                     clearPad() {
+                         if (this.context && this.$refs.sigCanvas) {
+                             this.context.clearRect(0, 0, this.$refs.sigCanvas.width, this.$refs.sigCanvas.height);
+                             this.hasInk = false;
+                         }
+                         $wire.set('form.signatureData', null);
+                     },
+                     adoptDrawn() {
+                         if (this.hasInk && this.$refs.sigCanvas) {
+                             const data = this.$refs.sigCanvas.toDataURL('image/png');
+                             $wire.set('form.signatureData', data);
+                             $wire.set('form.removeAuthorizedSignature', false);
+                         }
+                     },
+                     generateTypedPng() {
+                         const name = (this.typedName || $wire.form.signatureName || '{{ $studio->name }}').trim();
+                         const off = document.createElement('canvas');
+                         const ctx = off.getContext('2d');
+                         ctx.font = '700 48px \'Dancing Script\', \'Brush Script MT\', cursive';
+                         const textMetrics = ctx.measureText(name);
+                         const width = Math.max(260, Math.ceil(textMetrics.width) + 60);
+                         const height = 120;
+                         off.width = width;
+                         off.height = height;
+                         ctx.clearRect(0, 0, width, height);
+                         ctx.fillStyle = '#111827';
+                         ctx.font = '700 48px \'Dancing Script\', \'Brush Script MT\', cursive';
+                         ctx.textBaseline = 'middle';
+                         ctx.fillText(name, 30, height / 2);
+                         const data = off.toDataURL('image/png');
+                         $wire.set('form.signatureData', data);
+                         $wire.set('form.removeAuthorizedSignature', false);
+                     }
+                 }"
+                 x-on:saved.window="openPad = false; clearPad()">
+            <div class="border-b border-line pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-semibold text-ink">Authorized e-signature</h2>
+                    <p class="mt-0.5 text-sm text-muted">E-sign directly using your finger or mouse to stamp quotations automatically.</p>
+                </div>
+                @if ($studio->authorizedSignatureUrl() && ! $form->removeAuthorizedSignature)
+                    <button type="button"
+                            wire:click="$set('form.removeAuthorizedSignature', true); $set('form.signatureData', null)"
+                            class="btn-danger !py-1.5 !px-3 text-xs self-start sm:self-auto">
+                        Remove signature
+                    </button>
+                @elseif ($form->removeAuthorizedSignature)
+                    <button type="button"
+                            wire:click="$set('form.removeAuthorizedSignature', false)"
+                            class="btn-secondary !py-1.5 !px-3 text-xs self-start sm:self-auto">
+                        Undo removal
+                    </button>
+                @endif
+            </div>
+
+            {{-- Current signature preview or empty prompt --}}
+            @if ($form->signatureData)
+                <div class="rounded-xl border border-line bg-canvas/40 p-4">
+                    <p class="text-xs font-medium text-muted uppercase tracking-wider mb-2">New signature preview (click Save settings to apply)</p>
+                    <div class="h-20 w-52 sm:w-64 max-w-full rounded-lg border border-line bg-white flex items-center justify-center p-3 shadow-xs">
+                        <img src="{{ $form->signatureData }}" alt="New signature preview" class="max-h-full max-w-full object-contain">
+                    </div>
+                    <div class="mt-3 flex items-center gap-2">
+                        <button type="button" x-on:click="openPad = true; $nextTick(() => { resizeCanvas(); setTimeout(() => resizeCanvas(), 60); })" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Re-sign</button>
+                        <span class="text-xs text-muted">·</span>
+                        <button type="button" wire:click="$set('form.signatureData', null)" class="text-xs font-semibold text-red-600 hover:text-red-700">Discard changes</button>
+                    </div>
+                </div>
+            @elseif ($studio->authorizedSignatureUrl() && ! $form->removeAuthorizedSignature)
+                <div class="rounded-xl border border-line bg-canvas/40 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-medium text-muted uppercase tracking-wider mb-2">Saved authorized signature</p>
+                            <div class="h-20 w-52 sm:w-64 max-w-full rounded-lg border border-line bg-white flex items-center justify-center p-3 shadow-xs">
+                                <img src="{{ $studio->authorizedSignatureUrl() }}" alt="Authorized signature" class="max-h-full max-w-full object-contain">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center gap-2">
+                        <button type="button" x-on:click="openPad = true; $nextTick(() => { resizeCanvas(); setTimeout(() => resizeCanvas(), 60); })" class="btn-secondary !py-1.5 !px-3.5 text-xs">
+                            ✍ Update e-signature
+                        </button>
+                    </div>
+                </div>
+            @elseif ($form->removeAuthorizedSignature)
+                <div class="rounded-xl border border-red-200 bg-red-50/50 p-4 text-sm text-red-700">
+                    Signature marked for removal. It will be removed once you save settings.
+                </div>
+            @else
+                <div class="rounded-xl border-2 border-dashed border-line bg-canvas/40 p-6 text-center">
+                    <div class="mx-auto size-12 rounded-full bg-surface border border-line flex items-center justify-center text-muted text-xl mb-3">
+                        ✍
+                    </div>
+                    <p class="text-sm font-semibold text-ink">No authorized signature yet</p>
+                    <p class="mt-1 text-xs text-muted max-w-md mx-auto">Create an e-signature by drawing on screen or generating a handwritten script signature.</p>
+                    <div class="mt-4">
+                        <button type="button" x-on:click="openPad = true; $nextTick(() => { resizeCanvas(); setTimeout(() => resizeCanvas(), 60); })" class="btn-primary !py-2 !px-4 text-xs sm:text-sm">
+                            ✍ Create e-signature
+                        </button>
+                    </div>
+                </div>
+            @endif
+
+            {{-- E-Signature Draw / Type Drawer --}}
+            <div x-show="openPad" x-cloak class="rounded-2xl border-2 border-brand-500/40 bg-surface p-4 sm:p-5 space-y-4 shadow-sm">
+                <div class="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+                    <div class="inline-flex rounded-lg border border-line p-1 bg-canvas shrink-0">
+                        <button type="button"
+                                x-on:click="mode = 'draw'; $nextTick(() => { resizeCanvas(); setTimeout(() => resizeCanvas(), 60); })"
+                                x-bind:class="{ 'bg-surface shadow-xs font-semibold text-ink': mode === 'draw', 'text-muted': mode !== 'draw' }"
+                                class="px-3 py-1 text-xs rounded-md transition font-medium">
+                            Draw signature
+                        </button>
+                        <button type="button"
+                                x-on:click="mode = 'type'"
+                                x-bind:class="{ 'bg-surface shadow-xs font-semibold text-ink': mode === 'type', 'text-muted': mode !== 'type' }"
+                                class="px-3 py-1 text-xs rounded-md transition font-medium">
+                            Type name script
+                        </button>
+                    </div>
+
+                    <button type="button" x-on:click="openPad = false" class="text-xs font-medium text-muted hover:text-ink shrink-0">
+                        ✕ Cancel
+                    </button>
+                </div>
+
+                {{-- Draw Mode --}}
+                <div x-show="mode === 'draw'" class="space-y-3">
+                    <div class="relative rounded-xl border border-line bg-white overflow-hidden">
+                        <canvas x-ref="sigCanvas"
+                                x-on:pointerdown="startDraw($event)"
+                                x-on:pointermove="moveDraw($event)"
+                                x-on:pointerup="endDraw($event)"
+                                x-on:pointercancel="endDraw($event)"
+                                x-on:pointerleave="endDraw($event)"
+                                style="touch-action: none;"
+                                class="w-full h-36 cursor-crosshair block bg-white"></canvas>
+                        <div class="absolute bottom-2 left-3 pointer-events-none text-[11px] text-zinc-400">
+                            Sign above with finger or mouse
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-2">
+                        <button type="button" x-on:click="clearPad()" class="text-xs text-muted hover:text-ink font-medium shrink-0">
+                            Clear canvas
+                        </button>
+
+                        <button type="button"
+                                x-on:click="adoptDrawn(); openPad = false"
+                                x-bind:disabled="!hasInk"
+                                class="btn-primary !py-1.5 !px-3.5 text-xs disabled:opacity-40 shrink-0">
+                            Use drawn signature
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Type Mode --}}
+                <div x-show="mode === 'type'" class="space-y-4">
+                    <div>
+                        <label for="typed-sig-input" class="label">Enter name for signature</label>
+                        <input id="typed-sig-input"
+                                type="text"
+                                x-model="typedName"
+                                placeholder="e.g. {{ $form->signatureName ?: $studio->name }}"
+                                class="input">
+                        <p class="mt-1 text-xs text-muted">Type the name as you want it styled in the signature.</p>
+                    </div>
+
+                    <div>
+                        <p class="text-xs font-medium text-muted uppercase tracking-wider mb-1.5">Signature preview</p>
+                        <div class="p-4 sm:p-6 rounded-xl border border-line bg-white flex items-center justify-center min-h-[100px] shadow-xs overflow-hidden">
+                            <span class="text-center break-words max-w-full" style="font-family: 'Dancing Script', 'Brush Script MT', cursive; font-size: clamp(24px, 6vw, 42px); font-weight: 700; line-height: 1.1; color: #111827; letter-spacing: 0.5px;">
+                                <span x-text="typedName.trim() || '{{ $form->signatureName ?: $studio->name }}'"></span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pt-1">
+                        <p class="text-xs text-muted">Stamps an elegant handwritten e-signature on quotations.</p>
+                        <button type="button"
+                                x-on:click="generateTypedPng(); openPad = false"
+                                class="btn-primary !py-2 !px-4 text-xs font-semibold shrink-0 self-end sm:self-auto">
+                            Use this signature
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         {{-- Images --}}
         <section class="card space-y-6 p-6 sm:p-7">
             <div class="border-b border-line pb-4">

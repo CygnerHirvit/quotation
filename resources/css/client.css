@@ -636,6 +636,13 @@ h3 {
     padding: 22px;
     background: var(--q-surface);
     break-inside: avoid;
+    overflow-wrap: break-word;
+}
+
+.q-sign .q-btn {
+    white-space: normal;
+    text-align: center;
+    max-width: 100%;
 }
 
 .q-sign__line {
@@ -646,11 +653,15 @@ h3 {
 
 .q-sign__name {
     font-weight: 700;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .q-sign__meta {
     font-size: 13px;
     color: var(--q-muted);
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .q-sign__mark {
@@ -660,11 +671,14 @@ h3 {
     border-bottom: 1px solid var(--q-ink);
     margin: 10px 0;
     padding-bottom: 4px;
+    overflow: hidden;
 }
 
 .q-sign__mark img {
     max-height: 70px;
+    max-width: 100%;
     width: auto;
+    object-fit: contain;
     background: #fff;
     border-radius: 6px;
 }
@@ -672,8 +686,10 @@ h3 {
 .q-sign__typed,
 .q-typed-preview {
     font-family: 'Dancing Script', 'Brush Script MT', cursive;
-    font-size: 34px;
+    font-size: clamp(24px, 6vw, 34px);
     line-height: 1.1;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .q-sign--accepted {

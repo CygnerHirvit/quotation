@@ -54,11 +54,15 @@ class StudioSettingsForm extends Form
     /** @var TemporaryUploadedFile|null */
     public $coverCorporate = null;
 
+    public ?string $signatureData = null;
+
     public bool $removeLogo = false;
 
     public bool $removeCoverWedding = false;
 
     public bool $removeCoverCorporate = false;
+
+    public bool $removeAuthorizedSignature = false;
 
     public function setStudio(Studio $studio): void
     {
@@ -80,9 +84,11 @@ class StudioSettingsForm extends Form
         $this->logo = null;
         $this->coverWedding = null;
         $this->coverCorporate = null;
+        $this->signatureData = null;
         $this->removeLogo = false;
         $this->removeCoverWedding = false;
         $this->removeCoverCorporate = false;
+        $this->removeAuthorizedSignature = false;
     }
 
     /**
@@ -110,6 +116,7 @@ class StudioSettingsForm extends Form
             'logo' => [...$image, 'max:2048'],
             'coverWedding' => [...$image, 'max:5120'],
             'coverCorporate' => [...$image, 'max:5120'],
+            'signatureData' => ['nullable', 'string'],
         ];
     }
 
@@ -137,6 +144,7 @@ class StudioSettingsForm extends Form
             'whatsappMessage' => 'WhatsApp message',
             'coverWedding' => 'wedding cover',
             'coverCorporate' => 'corporate cover',
+            'signatureData' => 'authorized signature',
         ];
     }
 
@@ -165,20 +173,47 @@ class StudioSettingsForm extends Form
         $this->processImage('coverWedding', 'removeCoverWedding', 'cover_wedding_path', 'studios/covers');
         $this->processImage('coverCorporate', 'removeCoverCorporate', 'cover_corporate_path', 'studios/covers');
 
+        // Handle drawn e-signature removal or new signature data URL
+        if ($this->removeAuthorizedSignature) {
+            if ($this->studio->authorized_signature_path) {
+                $previous = $this->studio->authorized_signature_path;
+                $this->studio->authorized_signature_path = null;
+                if (Storage::disk('public')->exists($previous)) {
+                    Storage::disk('public')->delete($previous);
+                }
+            }
+        } elseif ($this->signatureData && str_starts_with($this->signatureData, 'data:image/png;base64,')) {
+            $bytes = base64_decode(substr($this->signatureData, strlen('data:image/png;base64,')), true);
+            if ($bytes !== false) {
+                $previous = $this->studio->authorized_signature_path;
+                $path = 'studios/'.$this->studio->id.'/signature-'.uniqid().'.png';
+                Storage::disk('public')->put($path, $bytes);
+                $this->studio->authorized_signature_path = $path;
+
+                if ($previous && Storage::disk('public')->exists($previous)) {
+                    Storage::disk('public')->delete($previous);
+                }
+            }
+        }
+
         $this->studio->save();
 
         $this->logo = null;
         $this->coverWedding = null;
         $this->coverCorporate = null;
+        $this->signatureData = null;
         $this->removeLogo = false;
         $this->removeCoverWedding = false;
         $this->removeCoverCorporate = false;
+        $this->removeAuthorizedSignature = false;
     }
 
     public function clearSelected(string $property): void
     {
         if (in_array($property, ['logo', 'coverWedding', 'coverCorporate'], true)) {
             $this->{$property} = null;
+        } elseif ($property === 'authorizedSignature' || $property === 'signatureData') {
+            $this->signatureData = null;
         }
     }
 

@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
 
 #[Fillable([
     'name', 'slug', 'logo_path', 'tagline', 'email', 'phone', 'city', 'address',
-    'signature_name', 'theme', 'accent_color', 'quote_prefix', 'gst_percent',
+    'signature_name', 'authorized_signature_path', 'theme', 'accent_color', 'quote_prefix', 'gst_percent',
     'validity_days', 'show_breakdown_default', 'whatsapp_message', 'notify_email_on_accept',
     'cover_wedding_path', 'cover_corporate_path', 'status',
 ])]
@@ -65,6 +65,11 @@ class Studio extends Model
     public function logoUrl(): ?string
     {
         return $this->logo_path ? Storage::disk('public')->url($this->logo_path) : null;
+    }
+
+    public function authorizedSignatureUrl(): ?string
+    {
+        return $this->authorized_signature_path ? Storage::disk('public')->url($this->authorized_signature_path) : null;
     }
 
     public function coverUrl(string $template): ?string

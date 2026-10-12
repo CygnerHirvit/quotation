@@ -311,7 +311,13 @@
             <div class="q-signoff">
                 <div class="q-sign">
                     <div class="q-eyebrow">Authorized signature</div>
-                    <div class="q-sign__line"></div>
+                    @if ($studio->authorizedSignatureUrl())
+                        <div class="q-sign__mark">
+                            <img src="{{ $studio->authorizedSignatureUrl() }}" alt="Authorized signature of {{ $studio->signature_name ?: $studio->name }}">
+                        </div>
+                    @else
+                        <div class="q-sign__line"></div>
+                    @endif
                     <div class="q-sign__name">{{ $studio->signature_name ?: $preparedBy ?: $studio->name }}</div>
                     <div class="q-sign__meta">{{ collect([$studio->name, $studio->phone])->filter()->join(' · ') }}</div>
                 </div>
