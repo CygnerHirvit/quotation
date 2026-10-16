@@ -84,31 +84,44 @@
                              }
                          });
                      },
-                     resizeCanvas() {
-                         const canvas = this.$refs.sigCanvas;
-                         if (!canvas) return;
-                         if (!this.context) {
-                             this.context = canvas.getContext('2d');
-                         }
-                         const box = canvas.getBoundingClientRect();
-                         const width = Math.floor(box.width) || 420;
-                         const height = 140;
-                         canvas.width = width * this.ratio;
-                         canvas.height = height * this.ratio;
+                     setupContext() {
+                         if (!this.context) return;
                          this.context.setTransform(this.ratio, 0, 0, this.ratio, 0, 0);
                          this.context.lineWidth = 2.4;
                          this.context.lineCap = 'round';
                          this.context.lineJoin = 'round';
                          this.context.strokeStyle = '#111827';
+                     },
+                     resizeCanvas() {
+                         const canvas = this.$refs.sigCanvas;
+                         if (!canvas) return;
+                         this.ratio = window.devicePixelRatio || 1;
+                         this.context = canvas.getContext('2d');
+                         const box = canvas.getBoundingClientRect();
+                         const width = Math.floor(box.width) || 420;
+                         const height = 140;
+                         canvas.width = width * this.ratio;
+                         canvas.height = height * this.ratio;
+                         this.setupContext();
                          this.hasInk = false;
+                         this.drawing = false;
                      },
                      getPos(e) {
-                         const box = this.$refs.sigCanvas.getBoundingClientRect();
+                         const canvas = this.$refs.sigCanvas;
+                         if (!canvas) return { x: 0, y: 0 };
+                         const box = canvas.getBoundingClientRect();
                          return { x: e.clientX - box.left, y: e.clientY - box.top };
                      },
                      startDraw(e) {
+                         if (e.button !== undefined && e.button !== 0) return;
+                         const canvas = this.$refs.sigCanvas;
+                         if (!canvas) return;
+                         if (!this.context) {
+                             this.context = canvas.getContext('2d');
+                             this.setupContext();
+                         }
                          this.drawing = true;
-                         try { this.$refs.sigCanvas.setPointerCapture(e.pointerId); } catch (_) {}
+                         try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
                          const pos = this.getPos(e);
                          this.context.beginPath();
                          this.context.moveTo(pos.x, pos.y);
@@ -117,23 +130,40 @@
                          this.hasInk = true;
                      },
                      moveDraw(e) {
-                         if (!this.drawing) return;
+                         if (!this.drawing || !this.context) return;
                          const pos = this.getPos(e);
                          this.context.lineTo(pos.x, pos.y);
                          this.context.stroke();
                      },
                      endDraw(e) {
+                         if (!this.drawing) return;
                          this.drawing = false;
-                         if (e && e.pointerId) {
-                             try { this.$refs.sigCanvas.releasePointerCapture(e.pointerId); } catch (_) {}
+                         const canvas = this.$refs.sigCanvas;
+                         if (e && e.pointerId && canvas) {
+                             try {
+                                 if (canvas.hasPointerCapture(e.pointerId)) {
+                                     canvas.releasePointerCapture(e.pointerId);
+                                 }
+                             } catch (_) {}
                          }
                      },
                      clearPad() {
-                         if (this.context && this.$refs.sigCanvas) {
-                             this.context.clearRect(0, 0, this.$refs.sigCanvas.width, this.$refs.sigCanvas.height);
-                             this.hasInk = false;
+                         const canvas = this.$refs.sigCanvas;
+                         if (canvas) {
+                             if (!this.context) {
+                                 this.context = canvas.getContext('2d');
+                             }
+                             if (this.context) {
+                                 this.context.save();
+                                 this.context.setTransform(1, 0, 0, 1, 0, 0);
+                                 this.context.clearRect(0, 0, canvas.width, canvas.height);
+                                 this.context.restore();
+                                 this.setupContext();
+                                 this.context.beginPath();
+                             }
                          }
-                         $wire.set('form.signatureData', null);
+                         this.hasInk = false;
+                         this.drawing = false;
                      },
                      adoptDrawn() {
                          if (this.hasInk && this.$refs.sigCanvas) {
@@ -232,7 +262,7 @@
             @endif
 
             {{-- E-Signature Draw / Type Drawer --}}
-            <div x-show="openPad" x-cloak class="rounded-2xl border-2 border-brand-500/40 bg-surface p-4 sm:p-5 space-y-4 shadow-sm">
+            <div x-show="openPad" x-cloak wire:ignore class="rounded-2xl border-2 border-brand-500/40 bg-surface p-4 sm:p-5 space-y-4 shadow-sm">
                 <div class="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
                     <div class="inline-flex rounded-lg border border-line p-1 bg-canvas shrink-0">
                         <button type="button"
@@ -860,7 +890,9 @@
 
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 @foreach ($themes as $theme)
-                    @php($palette = $theme->palette())
+                    @php
+                        $palette = $theme->palette();
+                    @endphp
                     <label wire:key="theme-{{ $theme->value }}" @class([
                         'cursor-pointer overflow-hidden rounded-xl border-2 transition',
                         'border-brand-500' => $form->theme === $theme->value,
@@ -886,7 +918,9 @@
 
             <div>
                 <label for="settings-accent" class="label">Accent colour (optional)</label>
-                @php($defaultAccent = \App\Enums\StudioTheme::tryFrom($form->theme)?->tokens()['accent'] ?? '#CA1919')
+                @php
+                    $defaultAccent = \App\Enums\StudioTheme::tryFrom($form->theme)?->tokens()['accent'] ?? '#CA1919';
+                @endphp
                 <div class="flex items-center gap-3 flex-wrap">
                     <input type="color" aria-label="Pick accent colour" value="{{ $form->accentColor ?: $defaultAccent }}" wire:model.live="form.accentColor" class="h-10 w-14 cursor-pointer rounded-lg border border-line bg-surface p-1 shrink-0">
                     <input id="settings-accent" type="text" wire:model.live.debounce.400ms="form.accentColor" class="input max-w-36 font-mono" placeholder="{{ $defaultAccent }}">
@@ -896,6 +930,87 @@
                 </div>
                 <p class="mt-1.5 text-xs text-muted">Replaces the theme's main colour, for example to match your logo.</p>
                 @error('form.accentColor') <p class="input-error">{{ $message }}</p> @enderror
+            </div>
+
+            {{-- Quotation section layout & order --}}
+            <div class="pt-5 border-t border-line space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div>
+                        <h3 class="text-sm font-semibold text-ink">Quotation sections &amp; order</h3>
+                        <p class="mt-0.5 text-xs text-muted">Review the order in which all pages and custom sections appear on client quotations and PDF.</p>
+                    </div>
+                    <a href="{{ route('studio.custom-sections') }}" wire:navigate class="btn-secondary !py-1.5 !px-3 text-xs self-start sm:self-auto font-semibold">
+                        Manage custom sections →
+                    </a>
+                </div>
+
+                {{-- Live Section Order Badge Flow --}}
+                <div class="rounded-xl border border-line bg-canvas/50 p-4 space-y-3">
+                    <p class="text-[11px] font-semibold text-muted uppercase tracking-wider">Resulting section sequence in quotations &amp; PDF</p>
+                    <div class="flex items-center gap-2 flex-wrap text-xs">
+                        @php
+                            $seq = 1;
+                            $customSecs = $studio->customSections()->where('is_active', true)->ordered()->get();
+                        @endphp
+                        <span class="px-2.5 py-1 rounded-md border border-line bg-surface font-medium text-ink">{{ sprintf('%02d', $seq++) }} Cover</span>
+                        <span class="text-muted">→</span>
+
+                        @foreach ($customSecs->where('position', 'after_cover') as $cs)
+                            <span class="px-2.5 py-1 rounded-md border-2 border-brand-500 bg-brand-50/50 font-bold text-brand-700">{{ sprintf('%02d', $seq++) }} {{ $cs->title }}</span>
+                            <span class="text-muted">→</span>
+                        @endforeach
+
+                        <span class="px-2.5 py-1 rounded-md border border-line bg-surface font-medium text-ink">{{ sprintf('%02d', $seq++) }} Coverage</span>
+                        <span class="text-muted">→</span>
+
+                        @foreach ($customSecs->where('position', 'after_coverage') as $cs)
+                            <span class="px-2.5 py-1 rounded-md border-2 border-brand-500 bg-brand-50/50 font-bold text-brand-700">{{ sprintf('%02d', $seq++) }} {{ $cs->title }}</span>
+                            <span class="text-muted">→</span>
+                        @endforeach
+
+                        <span class="px-2.5 py-1 rounded-md border border-line bg-surface font-medium text-ink">{{ sprintf('%02d', $seq++) }} Inclusions</span>
+                        <span class="text-muted">→</span>
+
+                        @foreach ($customSecs->where('position', 'after_deliverables') as $cs)
+                            <span class="px-2.5 py-1 rounded-md border-2 border-brand-500 bg-brand-50/50 font-bold text-brand-700">{{ sprintf('%02d', $seq++) }} {{ $cs->title }}</span>
+                            <span class="text-muted">→</span>
+                        @endforeach
+
+                        <span class="px-2.5 py-1 rounded-md border border-line bg-surface font-medium text-ink">{{ sprintf('%02d', $seq++) }} Price</span>
+                        <span class="text-muted">→</span>
+
+                        @foreach ($customSecs->where('position', 'after_price') as $cs)
+                            <span class="px-2.5 py-1 rounded-md border-2 border-brand-500 bg-brand-50/50 font-bold text-brand-700">{{ sprintf('%02d', $seq++) }} {{ $cs->title }}</span>
+                            <span class="text-muted">→</span>
+                        @endforeach
+
+                        <span class="px-2.5 py-1 rounded-md border border-line bg-surface font-medium text-ink">{{ sprintf('%02d', $seq++) }} Terms</span>
+                    </div>
+
+                    @if ($studio->customSections->isNotEmpty())
+                        <div class="mt-3 pt-3 border-t border-line/60 grid gap-2 sm:grid-cols-2">
+                            @foreach ($studio->customSections as $cs)
+                                <div class="flex items-center justify-between text-xs p-2 rounded-lg bg-surface border border-line">
+                                    <span class="font-medium text-ink truncate">{{ $cs->title }}</span>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <span class="text-[10px] text-muted">{{ match($cs->position) {
+                                            'after_cover' => 'After Cover',
+                                            'after_coverage' => 'After Coverage',
+                                            'after_deliverables' => 'After Inclusions',
+                                            'after_price' => 'After Price',
+                                            default => $cs->position
+                                        } }}</span>
+                                        <span @class([
+                                            'size-2 rounded-full',
+                                            'bg-emerald-500' => $cs->is_active,
+                                            'bg-gray-300' => ! $cs->is_active,
+                                        ]) title="{{ $cs->is_active ? 'Active' : 'Hidden' }}"></span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
             </div>
         </section>
 

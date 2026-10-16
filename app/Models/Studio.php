@@ -47,6 +47,14 @@ class Studio extends Model
     }
 
     /**
+     * @return HasMany<CustomSection, $this>
+     */
+    public function customSections(): HasMany
+    {
+        return $this->hasMany(CustomSection::class)->ordered();
+    }
+
+    /**
      * @return HasMany<User, $this>
      */
     public function users(): HasMany

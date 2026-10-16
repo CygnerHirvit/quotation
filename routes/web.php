@@ -12,6 +12,7 @@ use App\Livewire\Auth\Login;
 use App\Livewire\Studio\Portfolio as StudioPortfolio;
 use App\Livewire\Studio\PriceList as StudioPriceList;
 use App\Livewire\Studio\Quotations\Edit as QuotationEdit;
+use App\Livewire\Studio\CustomSections as StudioCustomSections;
 use App\Livewire\Studio\Quotations\Index as QuotationIndex;
 use App\Livewire\Studio\Settings as StudioSettings;
 use App\Livewire\Studio\Team as StudioTeam;
@@ -58,6 +59,8 @@ Route::middleware(['auth', 'can.sign.in'])->group(function () {
             Route::livewire('/team', StudioTeam::class)->name('team');
             Route::livewire('/price-list', StudioPriceList::class)->name('price-list');
             Route::livewire('/portfolio', StudioPortfolio::class)->name('portfolio');
+            Route::livewire('/custom-sections', StudioCustomSections::class)->name('custom-sections');
+            Route::redirect('/scope-of-work', '/studio/custom-sections')->name('scope-of-work');
             Route::livewire('/terms', StudioTerms::class)->name('terms');
         });
     });

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ItemSection;
 use App\Enums\PortfolioType;
+use App\Models\CustomSection;
 use App\Models\PortfolioItem;
 use App\Models\Quotation;
 use App\Notifications\QuotationViewed;
@@ -47,6 +48,15 @@ class ClientQuotationController extends Controller
             ->get()
             ->groupBy(fn (PortfolioItem $item) => $item->type->value);
 
+        $customSections = CustomSection::withoutGlobalScope('studio')
+            ->where('studio_id', $studio->id)
+            ->where('is_active', true)
+            ->with(['items' => function ($query) {
+                $query->where('is_active', true)->ordered();
+            }])
+            ->ordered()
+            ->get();
+
         return response()->view('client.quotation', [
             'quotation' => $quotation,
             'studio' => $studio,
@@ -57,6 +67,7 @@ class ClientQuotationController extends Controller
             'photoItems' => $includedItems->where('section', ItemSection::Photo)->values(),
             'albums' => $portfolio->get(PortfolioType::Album->value, collect()),
             'videos' => $portfolio->get(PortfolioType::Video->value, collect()),
+            'customSections' => $customSections,
             'totals' => $quotation->totals(),
             'showBreakdown' => $quotation->show_breakdown,
             'isStudioPreview' => $isStudioPreview,
@@ -87,6 +98,15 @@ class ClientQuotationController extends Controller
             ->get()
             ->groupBy(fn (PortfolioItem $item) => $item->type->value);
 
+        $customSections = CustomSection::withoutGlobalScope('studio')
+            ->where('studio_id', $studio->id)
+            ->where('is_active', true)
+            ->with(['items' => function ($query) {
+                $query->where('is_active', true)->ordered();
+            }])
+            ->ordered()
+            ->get();
+
         $html = view('client.quotation', [
             'quotation' => $quotation,
             'studio' => $studio,
@@ -97,6 +117,7 @@ class ClientQuotationController extends Controller
             'photoItems' => $includedItems->where('section', ItemSection::Photo)->values(),
             'albums' => $portfolio->get(PortfolioType::Album->value, collect()),
             'videos' => $portfolio->get(PortfolioType::Video->value, collect()),
+            'customSections' => $customSections,
             'totals' => $quotation->totals(),
             'showBreakdown' => $quotation->show_breakdown,
             'isStudioPreview' => false,

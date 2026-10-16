@@ -11,6 +11,7 @@
             ...($user->isStudioAdmin() ? [
                 ['label' => 'Price list', 'route' => 'studio.price-list', 'active' => 'studio.price-list'],
                 ['label' => 'Portfolio', 'route' => 'studio.portfolio', 'active' => 'studio.portfolio'],
+                ['label' => 'Custom sections', 'route' => 'studio.custom-sections', 'active' => ['studio.custom-sections', 'studio.scope-of-work']],
                 ['label' => 'Terms', 'route' => 'studio.terms', 'active' => 'studio.terms'],
                 ['label' => 'Team', 'route' => 'studio.team', 'active' => 'studio.team'],
                 ['label' => 'Settings', 'route' => 'studio.settings', 'active' => 'studio.settings'],

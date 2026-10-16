@@ -11,13 +11,31 @@
         GstMode::None => null,
     };
 
-    $sections = [
-        'cover' => 'Cover',
-        'events' => 'Events',
-        'deliverables' => 'Deliverables',
-        'price' => 'Price',
-        'terms' => 'Terms',
-    ];
+    $customSections = $customSections ?? collect();
+
+    $sections = ['cover' => 'Cover'];
+    foreach ($customSections->where('position', 'after_cover') as $cs) {
+        $sections[$cs->anchorId()] = $cs->title;
+    }
+    $sections['events'] = 'Events';
+    foreach ($customSections->where('position', 'after_coverage') as $cs) {
+        $sections[$cs->anchorId()] = $cs->title;
+    }
+    $sections['deliverables'] = 'Deliverables';
+    foreach ($customSections->where('position', 'after_deliverables') as $cs) {
+        $sections[$cs->anchorId()] = $cs->title;
+    }
+    $sections['price'] = 'Price';
+    foreach ($customSections->where('position', 'after_price') as $cs) {
+        $sections[$cs->anchorId()] = $cs->title;
+    }
+    $sections['terms'] = 'Terms';
+
+    $sectionNum = function (string $key) use ($sections): string {
+        $keys = array_keys($sections);
+        $idx = array_search($key, $keys, true);
+        return sprintf('%02d', ($idx === false ? 0 : $idx) + 1);
+    };
 
     $footerText = collect([$studio->name, $studio->email, $studio->phone, $studio->city])->filter()->join(' · ');
 @endphp
@@ -221,10 +239,14 @@
             @endif
         </section>
 
-        {{-- 02 Events --}}
+        @foreach ($customSections->where('position', 'after_cover') as $customSection)
+            @include('client.partials.custom-section', ['customSection' => $customSection])
+        @endforeach
+
+        {{-- Events --}}
         <section id="events" class="q-section" aria-labelledby="events-title">
             <div class="q-section__head">
-                <div class="q-eyebrow">02 · Coverage</div>
+                <div class="q-eyebrow">{{ $sectionNum('events') }} · Coverage</div>
                 <h2 id="events-title" class="q-section__title">The functions</h2>
                 <p class="q-section__lead">Who will be there for each part of the celebration.</p>
             </div>
@@ -254,30 +276,19 @@
                 </ol>
             @endif
 
-            @if ($albums->isNotEmpty())
-                <h3 class="q-subhead">Photo portfolio</h3>
-                <div class="q-gallery">
-                    @foreach ($albums as $album)
-                        <a class="q-tile" href="{{ $album->url }}" target="_blank" rel="noopener noreferrer">
-                            @if ($album->coverUrl())
-                                <img src="{{ $album->coverUrl() }}" alt="" loading="lazy" onerror="this.remove()">
-                            @endif
-                            <span class="q-tile__label">{{ $album->title }} ↗</span>
-                        </a>
-                    @endforeach
-                </div>
-                <p class="q-hint"><span class="q-no-print">Tap an album to see the full gallery.</span><span class="q-only-print">↗ Click any album to view online</span></p>
-            @endif
-
             @if ($footerText)
                 <footer class="q-page-footer q-only-print">{{ $footerText }}</footer>
             @endif
         </section>
 
-        {{-- 03 Deliverables --}}
+        @foreach ($customSections->where('position', 'after_coverage') as $customSection)
+            @include('client.partials.custom-section', ['customSection' => $customSection])
+        @endforeach
+
+        {{-- Deliverables --}}
         <section id="deliverables" class="q-section" aria-labelledby="deliverables-title">
             <div class="q-section__head">
-                <div class="q-eyebrow">03 · Inclusions</div>
+                <div class="q-eyebrow">{{ $sectionNum('deliverables') }} · Inclusions</div>
                 <h2 id="deliverables-title" class="q-section__title">What you receive</h2>
                 <p class="q-section__lead">Everything delivered after the celebration.</p>
             </div>
@@ -313,6 +324,21 @@
                 <p class="q-section__lead">Deliverables will be added soon.</p>
             @endif
 
+            @if ($albums->isNotEmpty())
+                <h3 class="q-subhead">Photo portfolio</h3>
+                <div class="q-gallery">
+                    @foreach ($albums as $album)
+                        <a class="q-tile" href="{{ $album->url }}" target="_blank" rel="noopener noreferrer">
+                            @if ($album->coverUrl())
+                                <img src="{{ $album->coverUrl() }}" alt="" loading="lazy" onerror="this.remove()">
+                            @endif
+                            <span class="q-tile__label">{{ $album->title }} ↗</span>
+                        </a>
+                    @endforeach
+                </div>
+                <p class="q-hint"><span class="q-no-print">Tap an album to see the full gallery.</span><span class="q-only-print">↗ Click any album to view online</span></p>
+            @endif
+
             @if ($videos->isNotEmpty())
                 <h3 class="q-subhead">Video portfolio</h3>
                 <div class="q-gallery">
@@ -334,10 +360,14 @@
             @endif
         </section>
 
-        {{-- 04 Price --}}
+        @foreach ($customSections->where('position', 'after_deliverables') as $customSection)
+            @include('client.partials.custom-section', ['customSection' => $customSection])
+        @endforeach
+
+        {{-- Price --}}
         <section id="price" class="q-section" aria-labelledby="price-title">
             <div class="q-section__head">
-                <div class="q-eyebrow">04 · Investment</div>
+                <div class="q-eyebrow">{{ $sectionNum('price') }} · Investment</div>
                 <h2 id="price-title" class="q-section__title">Price</h2>
             </div>
 
@@ -384,10 +414,14 @@
             @endif
         </section>
 
-        {{-- 05 Terms --}}
+        @foreach ($customSections->where('position', 'after_price') as $customSection)
+            @include('client.partials.custom-section', ['customSection' => $customSection])
+        @endforeach
+
+        {{-- Terms --}}
         <section id="terms" class="q-section" aria-labelledby="terms-title">
             <div class="q-section__head">
-                <div class="q-eyebrow">05 · The fine print</div>
+                <div class="q-eyebrow">{{ $sectionNum('terms') }} · Because Great Stories Begin With Mutual Trust</div>
                 <h2 id="terms-title" class="q-section__title">Terms &amp; conditions</h2>
             </div>
 

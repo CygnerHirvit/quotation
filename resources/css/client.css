@@ -442,6 +442,44 @@ h3 {
     margin: 40px 0 16px;
 }
 
+/* Scope of Work ------------------------------------------------------------- */
+
+.q-scope-banner {
+    background: var(--q-accent);
+    color: var(--q-on-accent);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 15px;
+    margin: 0 0 28px;
+    line-height: 1.4;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.q-scope-items {
+    display: grid;
+    gap: 22px;
+}
+
+.q-scope-item {
+    display: block;
+}
+
+.q-scope-item__title {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--q-ink);
+    margin: 0 0 6px;
+}
+
+.q-scope-item__desc {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--q-muted);
+    margin: 0;
+}
+
 /* Events -------------------------------------------------------------------- */
 
 .q-events {
@@ -1533,6 +1571,90 @@ h3 {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    /* -------------------------------------------------------------------------
+     * Scope of Work in Print
+     * ---------------------------------------------------------------------- */
+
+    #scope,
+    .q-custom-section {
+        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+        margin: 0 !important;
+        min-height: 100vh !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        padding: 16mm 18mm !important;
+        background: var(--q-bg) !important;
+        position: relative;
+        overflow: hidden !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        break-before: page !important;
+        page-break-before: always !important;
+        break-after: page !important;
+        page-break-after: always !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+    }
+
+    #scope .q-section__head,
+    .q-custom-section .q-section__head {
+        margin-bottom: 6px;
+    }
+
+    #scope .q-section__title,
+    .q-custom-section .q-section__title {
+        font-size: 24pt;
+        font-family: var(--q-display);
+        color: var(--q-accent) !important;
+        margin-top: 4px;
+    }
+
+    #scope .q-scope-banner,
+    .q-custom-section .q-scope-banner {
+        background: var(--q-accent) !important;
+        color: #FFFFFF !important;
+        padding: 5px 12px;
+        border-radius: 4px;
+        font-size: 8.5pt;
+        font-weight: 700;
+        margin: 4px 0 12px;
+        display: inline-block;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    #scope .q-scope-items,
+    .q-custom-section .q-scope-items {
+        display: grid;
+        gap: 8px;
+    }
+
+    #scope .q-scope-item,
+    .q-custom-section .q-scope-item {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    #scope .q-scope-item__title,
+    .q-custom-section .q-scope-item__title {
+        font-size: 10.5pt;
+        font-weight: 700;
+        color: var(--q-ink) !important;
+        margin: 0 0 2px;
+    }
+
+    #scope .q-scope-item__desc,
+    .q-custom-section .q-scope-item__desc {
+        font-size: 8pt;
+        line-height: 1.4;
+        color: var(--q-ink) !important;
+        margin: 0;
     }
 
     /* -------------------------------------------------------------------------
