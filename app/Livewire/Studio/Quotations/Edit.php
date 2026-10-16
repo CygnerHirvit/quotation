@@ -36,7 +36,11 @@ class Edit extends Component
 
     public string $bride = '';
 
+    public int $bridePosition = 1;
+
     public string $groom = '';
+
+    public int $groomPosition = 2;
 
     public string $clientName = '';
 
@@ -90,7 +94,9 @@ class Edit extends Component
      */
     protected const DETAIL_COLUMNS = [
         'bride' => 'bride',
+        'bridePosition' => 'bride_position',
         'groom' => 'groom',
+        'groomPosition' => 'groom_position',
         'clientName' => 'client_name',
         'clientPhone' => 'client_phone',
         'venue' => 'venue',
@@ -142,7 +148,9 @@ class Edit extends Component
 
         return [
             'bride' => ['nullable', 'string', 'max:120'],
+            'bridePosition' => ['required', 'integer', 'in:1,2'],
             'groom' => ['nullable', 'string', 'max:120'],
+            'groomPosition' => ['required', 'integer', 'in:1,2'],
             'clientName' => ['nullable', 'string', 'max:150'],
             'clientPhone' => ['nullable', 'string', 'max:30'],
             'venue' => ['nullable', 'string', 'max:190'],
@@ -187,6 +195,8 @@ class Edit extends Component
     protected function validationAttributes(): array
     {
         return [
+            'bridePosition' => 'bride position',
+            'groomPosition' => 'groom position',
             'endDate' => 'end date',
             'startDate' => 'start date',
             'validUntil' => 'valid until date',
@@ -207,11 +217,33 @@ class Edit extends Component
     /**
      * Save a single changed field.
      */
-    public function updated(string $property, mixed $value): void
+    public function updated(string $property, mixed $value = null): void
     {
         $this->ensureEditable();
 
         $this->validateOnly($property);
+
+        if ($property === 'bridePosition') {
+            $this->bridePosition = (int) $this->bridePosition;
+            $this->groomPosition = $this->bridePosition === 1 ? 2 : 1;
+            $this->quotation->bride_position = $this->bridePosition;
+            $this->quotation->groom_position = $this->groomPosition;
+            $this->quotation->save();
+            $this->quotation->refreshCachedTotals();
+
+            return;
+        }
+
+        if ($property === 'groomPosition') {
+            $this->groomPosition = (int) $this->groomPosition;
+            $this->bridePosition = $this->groomPosition === 1 ? 2 : 1;
+            $this->quotation->groom_position = $this->groomPosition;
+            $this->quotation->bride_position = $this->bridePosition;
+            $this->quotation->save();
+            $this->quotation->refreshCachedTotals();
+
+            return;
+        }
 
         $segments = explode('.', $property);
 
@@ -552,6 +584,28 @@ class Edit extends Component
     }
 
     /**
+     * Swap the display order of the Bride and Groom names.
+     */
+    public function swapPositions(): void
+    {
+        $this->ensureEditable();
+
+        $oldBride = $this->bridePosition;
+        $this->bridePosition = $this->groomPosition;
+        $this->groomPosition = $oldBride;
+
+        if ($this->bridePosition === $this->groomPosition) {
+            $this->bridePosition = 1;
+            $this->groomPosition = 2;
+        }
+
+        $this->quotation->bride_position = $this->bridePosition;
+        $this->quotation->groom_position = $this->groomPosition;
+        $this->quotation->save();
+        $this->quotation->refreshCachedTotals();
+    }
+
+    /**
      * Called when the share link is copied or sent on WhatsApp. A draft becomes "Sent".
      */
     public function markShared(): void
@@ -578,7 +632,9 @@ class Edit extends Component
         $quotation = $this->quotation;
 
         $this->bride = (string) $quotation->bride;
+        $this->bridePosition = (int) ($quotation->bride_position ?? 1);
         $this->groom = (string) $quotation->groom;
+        $this->groomPosition = (int) ($quotation->groom_position ?? 2);
         $this->clientName = (string) $quotation->client_name;
         $this->clientPhone = (string) $quotation->client_phone;
         $this->venue = (string) $quotation->venue;

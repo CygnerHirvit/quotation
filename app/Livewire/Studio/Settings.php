@@ -43,6 +43,11 @@ class Settings extends Component
         $this->validateOnly('form.coverCorporate');
     }
 
+    public function updatedFormTheme(): void
+    {
+        $this->form->accentColor = '';
+    }
+
     public function clearSelectedImage(string $property): void
     {
         $this->form->clearSelected($property);

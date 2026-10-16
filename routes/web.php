@@ -24,6 +24,10 @@ Route::get('/q/{token}', [ClientQuotationController::class, 'show'])
     ->where('token', '[A-Za-z0-9]{40}')
     ->name('quotations.public');
 
+Route::get('/q/{token}/pdf', [ClientQuotationController::class, 'pdf'])
+    ->where('token', '[A-Za-z0-9]{40}')
+    ->name('quotations.pdf');
+
 Route::post('/q/{token}/accept', AcceptQuotationController::class)
     ->where('token', '[A-Za-z0-9]{40}')
     ->middleware('throttle:10,1')

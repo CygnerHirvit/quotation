@@ -40,8 +40,8 @@ class PortfolioItem extends Model
      */
     public function coverUrl(): ?string
     {
-        if ($this->cover_path) {
-            return Storage::disk('public')->url($this->cover_path);
+        if ($this->cover_path && Storage::disk('public')->exists($this->cover_path)) {
+            return asset('storage/'.$this->cover_path);
         }
 
         $youtubeId = $this->youtubeId();

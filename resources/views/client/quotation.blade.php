@@ -18,6 +18,8 @@
         'price' => 'Price',
         'terms' => 'Terms',
     ];
+
+    $footerText = collect([$studio->name, $studio->email, $studio->phone, $studio->city])->filter()->join(' · ');
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -27,8 +29,16 @@
     <meta name="robots" content="noindex, nofollow">
     <title>{{ $quotation->displayName() }} · {{ $quotation->number }} · {{ $studio->name }}</title>
 
+    <meta property="og:title" content="{{ $quotation->displayName() }} · {{ $quotation->number }}">
+    <meta property="og:description" content="{{ $studio->name }} — {{ $quotation->function_type->label() }}{{ $quotation->datesLabel() ? ' on '.$quotation->datesLabel() : '' }}">
+    <meta property="og:url" content="{{ $quotation->publicUrl() }}">
+    <meta property="og:type" content="website">
+    @if ($studio->logoUrl())
+        <meta property="og:image" content="{{ $studio->logoUrl() }}">
+    @endif
+
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link rel="stylesheet" href="https://fonts.bunny.net/css?family={{ $fonts['query'] }}|dancing-script:600&display=swap">
+    <link rel="stylesheet" href="https://fonts.bunny.net/css?family={{ $fonts['query'] }}|dancing-script:400,600,700&display=swap">
 
     {{-- Theme values come from the theme enum or a validated #RRGGBB accent, so they are safe to print raw here. --}}
     <style>
@@ -40,6 +50,22 @@
             --q-body: {!! $fonts['body'] !!};
             color-scheme: {{ $studio->theme === \App\Enums\StudioTheme::MidnightGold ? 'dark' : 'light' }};
         }
+
+        @page {
+            margin: 0;
+        }
+
+        @page :left {
+            margin: 0;
+        }
+
+        @page :right {
+            margin: 0;
+        }
+
+        @page :first {
+            margin: 0;
+        }
     </style>
 
     @vite('resources/css/client.css')
@@ -50,7 +76,7 @@
             <div class="q-bar__row">
                 <div class="q-brand">
                     @if ($studio->logoUrl())
-                        <img class="q-brand__logo" src="{{ $studio->logoUrl() }}" alt="{{ $studio->name }} logo">
+                        <img class="q-brand__logo" src="{{ $studio->logoUrl() }}" alt="{{ $studio->name }} logo" onerror="this.replaceWith(Object.assign(document.createElement('span'), {className: 'q-brand__initial', textContent: '{{ addslashes($studio->initial()) }}'}))">
                     @else
                         <span class="q-brand__initial" aria-hidden="true">{{ $studio->initial() }}</span>
                     @endif
@@ -66,15 +92,18 @@
                     @elseif ($canAccept)
                         <button type="button" class="q-btn q-btn--primary" data-open-accept><span aria-hidden="true">✍</span>&nbsp;<span class="q-btn__text">Accept &amp; E-Sign</span></button>
                     @endif
+                    <a href="{{ $quotation->pdfUrl() }}" class="q-btn" aria-label="Download PDF">
+                        <span aria-hidden="true">📥</span><span class="q-btn__text">Download PDF</span>
+                    </a>
                     <button type="button" class="q-btn" onclick="window.print()" aria-label="Print or save as PDF">
-                        <span aria-hidden="true">⎙</span><span class="q-btn__text">Print / PDF</span>
+                        <span aria-hidden="true">⎙</span><span class="q-btn__text">Print</span>
                     </button>
                 </div>
             </div>
 
             <nav class="q-tabs" aria-label="Sections">
                 @foreach ($sections as $id => $label)
-                    <a href="#{{ $id }}" data-section-link="{{ $id }}"><span>{{ sprintf('%02d', $loop->iteration) }}</span>{{ $label }}</a>
+                    <a href="#{{ $id }}" data-section-link="{{ $id }}" @class(['is-active' => $loop->first])><span>{{ sprintf('%02d', $loop->iteration) }}</span>{{ $label }}</a>
                 @endforeach
             </nav>
         </div>
@@ -93,18 +122,74 @@
             <p class="q-notice">This quotation was valid until {{ $quotation->valid_until->format('j M Y') }}. Please contact {{ $studio->name }} to confirm the latest prices.</p>
         @endif
 
+        {{-- Dedicated PDF Cover Page (Page 1 in Print/PDF, hidden on screen) --}}
+        <div class="q-pdf-cover">
+            <div class="q-pdf-cover__top">
+                @if ($studio->logoUrl())
+                    <img class="q-pdf-cover__logo" src="{{ $studio->logoUrl() }}" alt="{{ $studio->name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="q-pdf-cover__brand-text" style="display: none;">{{ $studio->name }}</div>
+                @else
+                    <div class="q-pdf-cover__brand-text">{{ $studio->name }}</div>
+                @endif
+            </div>
+
+            <div class="q-pdf-cover__center">
+                <div class="q-pdf-cover__eyebrow">
+                    {{ $quotation->bride && $quotation->groom ? 'A PROPOSAL FOR YOUR LOVE STORY' : mb_strtoupper($quotation->documentTitle()) }}
+                </div>
+
+                <h1 class="q-pdf-cover__names">
+                    @if ($quotation->bride && $quotation->groom)
+                        @php
+                            $coupleNames = $quotation->coupleNames();
+                        @endphp
+                        {{ mb_strtoupper($coupleNames[0]) }} <span class="q-amp">&amp;</span> {{ mb_strtoupper($coupleNames[1]) }}
+                    @else
+                        {{ mb_strtoupper($quotation->displayName()) }}
+                    @endif
+                </h1>
+
+                <div class="q-pdf-cover__meta">
+                    @if ($quotation->datesLabel())
+                        <div class="q-pdf-cover__dates">{{ mb_strtoupper($quotation->datesLabel()) }}</div>
+                    @endif
+                    @php
+                        $coverLocation = collect([$quotation->venue, $quotation->city])->filter()->join(', ');
+                    @endphp
+                    @if ($coverLocation)
+                        <div class="q-pdf-cover__location">{{ mb_strtoupper($coverLocation) }}</div>
+                    @endif
+                </div>
+            </div>
+
+            <div class="q-pdf-cover__bottom">
+                <div class="q-pdf-cover__heart" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#FFFFFF"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                </div>
+                <div class="q-pdf-cover__tagline">
+                    {{ $isCorporate ? ($studio->tagline ?: '...Crafting memories') : '...Love is everything' }}
+                </div>
+                @if ($footerText)
+                    <div class="q-pdf-cover__footer">{{ $footerText }}</div>
+                @endif
+            </div>
+        </div>
+
         {{-- 01 Cover --}}
         <section id="cover" aria-label="Cover">
             <div @class(['q-cover', 'q-cover--photo' => $coverUrl])>
                 @if ($coverUrl)
-                    <img class="q-cover__image" src="{{ $coverUrl }}" alt="">
+                    <img class="q-cover__image" src="{{ $coverUrl }}" alt="" onerror="this.closest('.q-cover').classList.remove('q-cover--photo'); this.remove();">
                     <div class="q-cover__shade"></div>
                 @endif
                 <div class="q-cover__body">
                     <div class="q-eyebrow">{{ $quotation->documentTitle() }}</div>
                     <h1 class="q-cover__names">
                         @if ($quotation->bride && $quotation->groom)
-                            {{ $quotation->bride }} <span class="q-amp">&amp;</span> {{ $quotation->groom }}
+                            @php
+                                $coupleNames = $quotation->coupleNames();
+                            @endphp
+                            {{ $coupleNames[0] }} <span class="q-amp">&amp;</span> {{ $coupleNames[1] }}
                         @else
                             {{ $quotation->displayName() }}
                         @endif
@@ -130,6 +215,10 @@
                     <div class="q-fact"><dt>Prepared by</dt><dd>{{ $preparedBy }}</dd></div>
                 @endif
             </dl>
+
+            @if ($footerText)
+                <footer class="q-page-footer q-only-print">{{ $footerText }}</footer>
+            @endif
         </section>
 
         {{-- 02 Events --}}
@@ -171,13 +260,17 @@
                     @foreach ($albums as $album)
                         <a class="q-tile" href="{{ $album->url }}" target="_blank" rel="noopener noreferrer">
                             @if ($album->coverUrl())
-                                <img src="{{ $album->coverUrl() }}" alt="" loading="lazy">
+                                <img src="{{ $album->coverUrl() }}" alt="" loading="lazy" onerror="this.remove()">
                             @endif
                             <span class="q-tile__label">{{ $album->title }} ↗</span>
                         </a>
                     @endforeach
                 </div>
-                <p class="q-hint q-no-print">Tap an album to see the full gallery.</p>
+                <p class="q-hint"><span class="q-no-print">Tap an album to see the full gallery.</span><span class="q-only-print">↗ Click any album to view online</span></p>
+            @endif
+
+            @if ($footerText)
+                <footer class="q-page-footer q-only-print">{{ $footerText }}</footer>
             @endif
         </section>
 
@@ -226,13 +319,18 @@
                     @foreach ($videos as $video)
                         <a class="q-tile" href="{{ $video->url }}" target="_blank" rel="noopener noreferrer">
                             @if ($video->coverUrl())
-                                <img src="{{ $video->coverUrl() }}" alt="" loading="lazy">
+                                <img src="{{ $video->coverUrl() }}" alt="" loading="lazy" onerror="this.remove()">
                             @endif
                             <span class="q-tile__play" aria-hidden="true">▶</span>
                             <span class="q-tile__label">{{ $video->title }}</span>
                         </a>
                     @endforeach
                 </div>
+                <p class="q-hint"><span class="q-no-print">Tap a video to watch online.</span><span class="q-only-print">▶ Click any video to watch online</span></p>
+            @endif
+
+            @if ($footerText)
+                <footer class="q-page-footer q-only-print">{{ $footerText }}</footer>
             @endif
         </section>
 
@@ -280,6 +378,10 @@
                     </dl>
                 </div>
             @endif
+
+            @if ($footerText)
+                <footer class="q-page-footer q-only-print">{{ $footerText }}</footer>
+            @endif
         </section>
 
         {{-- 05 Terms --}}
@@ -313,7 +415,7 @@
                     <div class="q-eyebrow">Authorized signature</div>
                     @if ($studio->authorizedSignatureUrl())
                         <div class="q-sign__mark">
-                            <img src="{{ $studio->authorizedSignatureUrl() }}" alt="Authorized signature of {{ $studio->signature_name ?: $studio->name }}">
+                            <img src="{{ $studio->authorizedSignatureUrl() }}" alt="Authorized signature of {{ $studio->signature_name ?: $studio->name }}" onerror="this.closest('.q-sign__mark').remove()">
                         </div>
                     @else
                         <div class="q-sign__line"></div>
@@ -343,11 +445,13 @@
                     @endif
                 </div>
             </div>
-        </section>
 
-        <footer class="q-footer">
-            {{ collect([$studio->name, $studio->email, $studio->phone, $studio->city])->filter()->join(' · ') }}
-        </footer>
+            @if ($footerText)
+                <footer class="q-footer q-page-footer">
+                    {{ $footerText }}
+                </footer>
+            @endif
+        </section>
     </main>
 
     @if ($canAccept)

@@ -31,6 +31,8 @@ class QuotationFactory extends Factory
             'function_side' => FunctionSide::BothSides,
             'bride' => fake()->firstNameFemale(),
             'groom' => fake()->firstNameMale(),
+            'bride_position' => 1,
+            'groom_position' => 2,
             'city' => fake()->city(),
             'dates_tbd' => true,
             'discount_percent' => 0,

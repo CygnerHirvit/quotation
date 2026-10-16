@@ -24,7 +24,7 @@ use Illuminate\Support\Str;
 
 #[Fillable([
     'studio_id', 'created_by', 'token', 'number', 'function_type', 'function_side',
-    'bride', 'groom', 'client_name', 'client_phone', 'venue', 'city',
+    'bride', 'groom', 'bride_position', 'groom_position', 'client_name', 'client_phone', 'venue', 'city',
     'dates_tbd', 'start_date', 'end_date',
     'discount_percent', 'gst_percent', 'gst_mode', 'manual_total', 'show_breakdown',
     'internal_notes', 'status', 'valid_until',
@@ -47,6 +47,8 @@ class Quotation extends Model
             'function_side' => FunctionSide::class,
             'status' => QuotationStatus::class,
             'gst_mode' => GstMode::class,
+            'bride_position' => 'integer',
+            'groom_position' => 'integer',
             'dates_tbd' => 'boolean',
             'start_date' => 'date',
             'end_date' => 'date',
@@ -78,6 +80,8 @@ class Quotation extends Model
                 'number' => self::nextNumber($studio),
                 'function_type' => $functionType,
                 'function_side' => $functionType === FunctionType::Corporate ? null : FunctionSide::BothSides,
+                'bride_position' => 1,
+                'groom_position' => 2,
                 'city' => "",
                 'dates_tbd' => true,
                 'discount_percent' => 0,
@@ -192,11 +196,40 @@ class Quotation extends Model
     }
 
     /**
-     * "Bride & Groom", the client name for corporate quotations, or a placeholder for empty drafts.
+     * Return the couple names ordered by their configured positions.
+     *
+     * @return list<string>
+     */
+    public function coupleNames(): array
+    {
+        $bride = trim((string) $this->bride);
+        $groom = trim((string) $this->groom);
+        $bridePos = (int) ($this->bride_position ?? 1);
+        $groomPos = (int) ($this->groom_position ?? 2);
+
+        if ($bride !== '' && $groom !== '') {
+            return $bridePos <= $groomPos
+                ? [$bride, $groom]
+                : [$groom, $bride];
+        }
+
+        if ($bride !== '') {
+            return [$bride];
+        }
+
+        if ($groom !== '') {
+            return [$groom];
+        }
+
+        return [];
+    }
+
+    /**
+     * "Bride & Groom" (or "Groom & Bride" depending on position), the client name for corporate quotations, or a placeholder for empty drafts.
      */
     public function displayName(): string
     {
-        $couple = collect([$this->bride, $this->groom])->filter()->join(' & ');
+        $couple = collect($this->coupleNames())->join(' & ');
 
         return $couple ?: ($this->client_name ?: 'Untitled quotation');
     }
@@ -233,6 +266,14 @@ class Quotation extends Model
     }
 
     /**
+     * Direct PDF download link with all hyperlinks preserved.
+     */
+    public function pdfUrl(): string
+    {
+        return route('quotations.pdf', $this->token);
+    }
+
+    /**
      * The studio's WhatsApp message with this quotation's details filled in.
      */
     public function whatsappMessage(): string
@@ -260,7 +301,11 @@ class Quotation extends Model
             $digits = '91'.$digits;
         }
 
-        return 'https://wa.me/'.$digits.'?text='.rawurlencode($this->whatsappMessage());
+        if ($digits !== '') {
+            return 'https://wa.me/'.$digits.'?text='.rawurlencode($this->whatsappMessage());
+        }
+
+        return 'https://api.whatsapp.com/send?text='.rawurlencode($this->whatsappMessage());
     }
 
     /**

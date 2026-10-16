@@ -28,7 +28,7 @@ class Studio extends Model
      * Used when the studio has not written its own WhatsApp message.
      * Placeholders: {client}, {studio}, {number}, {link}.
      */
-    public const DEFAULT_WHATSAPP_MESSAGE = "Hi {client}, here is your quotation {number} from {studio}:\n{link}";
+    public const DEFAULT_WHATSAPP_MESSAGE = "Hi {client}, here is your quotation {number} from {studio}:\n\n{link}";
 
     /**
      * Get the attributes that should be cast.
@@ -64,19 +64,25 @@ class Studio extends Model
 
     public function logoUrl(): ?string
     {
-        return $this->logo_path ? Storage::disk('public')->url($this->logo_path) : null;
+        return $this->logo_path && Storage::disk('public')->exists($this->logo_path)
+            ? asset('storage/'.$this->logo_path)
+            : null;
     }
 
     public function authorizedSignatureUrl(): ?string
     {
-        return $this->authorized_signature_path ? Storage::disk('public')->url($this->authorized_signature_path) : null;
+        return $this->authorized_signature_path && Storage::disk('public')->exists($this->authorized_signature_path)
+            ? asset('storage/'.$this->authorized_signature_path)
+            : null;
     }
 
     public function coverUrl(string $template): ?string
     {
         $path = $template === 'corporate' ? $this->cover_corporate_path : $this->cover_wedding_path;
 
-        return $path ? Storage::disk('public')->url($path) : null;
+        return $path && Storage::disk('public')->exists($path)
+            ? asset('storage/'.$path)
+            : null;
     }
 
     /**

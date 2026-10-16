@@ -1,7 +1,10 @@
 @php
     use App\Support\Inr;
 
-    $title = collect([$bride, $groom])->filter()->join(' & ') ?: ($clientName ?: 'Untitled quotation');
+    $coupleNames = $bridePosition <= $groomPosition
+        ? array_filter([$bride, $groom])
+        : array_filter([$groom, $bride]);
+    $title = collect($coupleNames)->join(' & ') ?: ($clientName ?: 'Untitled quotation');
 @endphp
 
 <div class="space-y-6">
@@ -81,18 +84,18 @@
                         <span>View copy</span>
                     </a>
 
-                    {{-- Export PDF --}}
+                    {{-- Download PDF --}}
                     <a
-                        href="{{ $quotation->publicUrl() }}?print=1"
+                        href="{{ $quotation->pdfUrl() }}"
                         target="_blank"
                         rel="noopener"
                         class="btn-secondary !py-2 !px-3 text-xs sm:text-sm font-medium justify-center"
-                        title="Opens the client copy and the print window. Choose “Save as PDF”."
+                        title="Download official PDF with clickable links"
                     >
                         <svg class="size-4 shrink-0 text-muted" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                         </svg>
-                        <span>Export PDF</span>
+                        <span>Download PDF</span>
                     </a>
 
                     {{-- WhatsApp --}}
@@ -179,7 +182,23 @@
         <div class="min-w-0 space-y-6">
             {{-- Client & quotation --}}
             <section class="card space-y-5 p-6">
-                <h2 class="text-lg font-semibold">{{ $isCorporate ? 'Client & quotation' : 'Couple & quotation' }}</h2>
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h2 class="text-lg font-semibold">{{ $isCorporate ? 'Client & quotation' : 'Couple & quotation' }}</h2>
+
+                    @unless ($isCorporate)
+                        <button
+                            type="button"
+                            wire:click="swapPositions"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-line bg-surface hover:bg-canvas hover:border-brand-400 text-ink transition shadow-xs cursor-pointer group"
+                            title="Click to swap Bride and Groom field position"
+                        >
+                            <svg class="size-3.5 text-brand-600 group-hover:rotate-180 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                            </svg>
+                            <span><strong class="text-brand-700 font-semibold">{{ $bridePosition === 1 ? 'Bride & Groom' : 'Groom & Bride' }}</strong></span>
+                        </button>
+                    @endunless
+                </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
                     @if ($isCorporate)
@@ -189,16 +208,29 @@
                             @error('clientName') <p class="input-error">{{ $message }}</p> @enderror
                         </div>
                     @else
-                        <div>
-                            <label for="bride" class="label">Bride</label>
-                            <input id="bride" type="text" wire:model.live.debounce.500ms="bride" class="input" placeholder="Bride's name">
-                            @error('bride') <p class="input-error">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label for="groom" class="label">Groom</label>
-                            <input id="groom" type="text" wire:model.live.debounce.500ms="groom" class="input" placeholder="Groom's name">
-                            @error('groom') <p class="input-error">{{ $message }}</p> @enderror
-                        </div>
+                        @if ($bridePosition <= $groomPosition)
+                            <div wire:key="field-bride">
+                                <label for="bride" class="label">Bride</label>
+                                <input id="bride" type="text" wire:model.live.debounce.500ms="bride" class="input" placeholder="Bride's name">
+                                @error('bride') <p class="input-error">{{ $message }}</p> @enderror
+                            </div>
+                            <div wire:key="field-groom">
+                                <label for="groom" class="label">Groom</label>
+                                <input id="groom" type="text" wire:model.live.debounce.500ms="groom" class="input" placeholder="Groom's name">
+                                @error('groom') <p class="input-error">{{ $message }}</p> @enderror
+                            </div>
+                        @else
+                            <div wire:key="field-groom">
+                                <label for="groom" class="label">Groom</label>
+                                <input id="groom" type="text" wire:model.live.debounce.500ms="groom" class="input" placeholder="Groom's name">
+                                @error('groom') <p class="input-error">{{ $message }}</p> @enderror
+                            </div>
+                            <div wire:key="field-bride">
+                                <label for="bride" class="label">Bride</label>
+                                <input id="bride" type="text" wire:model.live.debounce.500ms="bride" class="input" placeholder="Bride's name">
+                                @error('bride') <p class="input-error">{{ $message }}</p> @enderror
+                            </div>
+                        @endif
                     @endif
 
                     <div>
@@ -253,6 +285,9 @@
                         <label for="function-type" class="label">Function type</label>
                         <select id="function-type" wire:model.live="functionType" class="input">
                             @foreach ($functionTypes as $typeOption)
+                                @if($typeOption->value == "corporate" || $typeOption->value == "other")
+                                    @continue
+                                @endif
                                 <option value="{{ $typeOption->value }}">{{ $typeOption->label() }}</option>
                             @endforeach
                         </select>

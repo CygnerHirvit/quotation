@@ -676,7 +676,7 @@
                 </div>
 
                 {{-- Corporate Cover Photo --}}
-                <div wire:key="image-coverCorporate-card"
+                {{-- <div wire:key="image-coverCorporate-card"
                      x-data="{
                          previewUrl: null,
                          handleFileSelect(event) {
@@ -705,7 +705,7 @@
                             <p class="text-xs text-muted mt-0.5">Shown at the top of corporate quotations. Landscape, up to 5 MB.</p>
                         </div>
 
-                        {{-- Banner Preview (16:9 Aspect Ratio) --}}
+
                         <div x-bind:class="{
                                 'border border-line shadow-xs': previewUrl || {{ ($form->coverCorporate?->isPreviewable() || (! $form->removeCoverCorporate && $studio->coverUrl('corporate'))) ? 'true' : 'false' }},
                                 'border-2 border-dashed border-line': !previewUrl && {{ (! $form->coverCorporate?->isPreviewable() && ($form->removeCoverCorporate || ! $studio->coverUrl('corporate'))) ? 'true' : 'false' }}
@@ -714,7 +714,7 @@
                                 'relative group aspect-video w-full overflow-hidden rounded-xl bg-surface transition',
                             ])>
                             <label for="settings-coverCorporate" class="relative flex size-full cursor-pointer items-center justify-center transition focus-within:ring-2 focus-within:ring-brand-500">
-                                {{-- Client-side Preview --}}
+
                                 <template x-if="previewUrl">
                                     <div class="size-full relative">
                                         <img :src="previewUrl" alt="Selected corporate cover preview" class="size-full object-cover">
@@ -728,7 +728,7 @@
                                     </div>
                                 </template>
 
-                                {{-- Server-rendered Fallback --}}
+
                                 <div x-show="!previewUrl" class="size-full flex items-center justify-center">
                                     @if ($form->coverCorporate?->isPreviewable())
                                         <img src="{{ $form->coverCorporate->temporaryUrl() }}" alt="Corporate cover preview" class="size-full object-cover" onerror="this.style.display='none'">
@@ -767,7 +767,7 @@
                                     @endif
                                 </div>
 
-                                {{-- Loading Overlay --}}
+
                                 <div wire:loading.flex wire:target="form.coverCorporate" class="absolute inset-0 flex flex-col items-center justify-center bg-surface/90 backdrop-blur-xs z-10">
                                     <svg class="size-6 animate-spin text-brand-600" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -779,11 +779,11 @@
                         </div>
                     </div>
 
-                    {{-- Actions --}}
+
                     <div class="mt-4 pt-3 border-t border-line/60 space-y-2">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <div class="flex flex-wrap items-center gap-2">
-                                {{-- When new file is selected (client or server) --}}
+
                                 <div x-show="previewUrl || {{ $form->coverCorporate?->isPreviewable() ? 'true' : 'false' }}" class="flex flex-wrap items-center gap-2">
                                     <label for="settings-coverCorporate" class="btn-secondary cursor-pointer !py-1.5 !px-3 text-xs">
                                         <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -799,7 +799,7 @@
                                     </button>
                                 </div>
 
-                                {{-- When no new file selected --}}
+
                                 <div x-show="!previewUrl && {{ ! $form->coverCorporate?->isPreviewable() ? 'true' : 'false' }}" class="flex flex-wrap items-center gap-2">
                                     @if ($form->removeCoverCorporate)
                                         <button type="button" wire:click="undoImageRemoval('coverCorporate')" class="btn-secondary !py-1.5 !px-3 text-xs">
@@ -847,7 +847,7 @@
                             <p class="input-error text-xs">{{ $message }}</p>
                         @enderror
                     </div>
-                </div>
+                </div> --}}
             </div>
         </section>
 
@@ -858,7 +858,7 @@
                 <p class="mt-1 text-sm text-muted">How your quotations look to couples and clients.</p>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-3">
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 @foreach ($themes as $theme)
                     @php($palette = $theme->palette())
                     <label wire:key="theme-{{ $theme->value }}" @class([
@@ -886,9 +886,10 @@
 
             <div>
                 <label for="settings-accent" class="label">Accent colour (optional)</label>
+                @php($defaultAccent = \App\Enums\StudioTheme::tryFrom($form->theme)?->tokens()['accent'] ?? '#CA1919')
                 <div class="flex items-center gap-3 flex-wrap">
-                    <input type="color" aria-label="Pick accent colour" value="{{ $form->accentColor ?: '#0F4C4A' }}" wire:model.live="form.accentColor" class="h-10 w-14 cursor-pointer rounded-lg border border-line bg-surface p-1 shrink-0">
-                    <input id="settings-accent" type="text" wire:model.live.debounce.400ms="form.accentColor" class="input max-w-36 font-mono" placeholder="#0F4C4A">
+                    <input type="color" aria-label="Pick accent colour" value="{{ $form->accentColor ?: $defaultAccent }}" wire:model.live="form.accentColor" class="h-10 w-14 cursor-pointer rounded-lg border border-line bg-surface p-1 shrink-0">
+                    <input id="settings-accent" type="text" wire:model.live.debounce.400ms="form.accentColor" class="input max-w-36 font-mono" placeholder="{{ $defaultAccent }}">
                     @if ($form->accentColor)
                         <button type="button" wire:click="$set('form.accentColor', '')" class="text-sm font-semibold text-muted hover:text-ink">Use theme colour</button>
                     @endif

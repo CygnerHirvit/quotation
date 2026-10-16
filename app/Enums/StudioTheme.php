@@ -50,8 +50,8 @@ enum StudioTheme: string
                 'line' => '#EFE6E8', 'accent' => '#A65A6B', 'on-accent' => '#FFFFFF', 'highlight' => '#A65A6B',
             ],
             self::RoyalCrimson => [
-                'bg' => '#F8F6F2', 'surface' => '#FFFFFF', 'soft' => '#F5ECE8', 'ink' => '#1C1917', 'muted' => '#78716C',
-                'line' => '#EAE4DC', 'accent' => '#7E151A', 'on-accent' => '#FFFFFF', 'highlight' => '#7E151A',
+                'bg' => '#FBF8F2', 'surface' => '#F4EEE2', 'soft' => '#F4EEE2', 'ink' => '#1A1A1A', 'muted' => '#555555',
+                'line' => '#E5DED0', 'accent' => '#CA1919', 'on-accent' => '#FFFFFF', 'highlight' => '#CA1919',
             ],
         };
     }
@@ -80,9 +80,9 @@ enum StudioTheme: string
     {
         return match ($this) {
             self::TealMarigold => ['background' => '#FBF6EC', 'accent' => '#0F4C4A', 'soft' => '#F6E3BC', 'ink' => '#14302F'],
-            self::MidnightGold => ['background' => '#12161F', 'accent' => '#C9A86A', 'soft' => '#1B212D', 'ink' => '#EFE9DD'],
-            self::BlushEditorial => ['background' => '#FFFFFF', 'accent' => '#B4697A', 'soft' => '#FBF1F2', 'ink' => '#27242A'],
-            self::RoyalCrimson => ['background' => '#F8F6F2', 'accent' => '#7E151A', 'soft' => '#F5ECE8', 'ink' => '#1C1917'],
+            self::MidnightGold => ['background' => '#12161F', 'accent' => '#C9A86A', 'soft' => '#1F2633', 'ink' => '#EFE9DD'],
+            self::BlushEditorial => ['background' => '#FFFFFF', 'accent' => '#A65A6B', 'soft' => '#FBF1F2', 'ink' => '#27242A'],
+            self::RoyalCrimson => ['background' => '#FBF8F2', 'accent' => '#CA1919', 'soft' => '#F4EEE2', 'ink' => '#1A1A1A'],
         };
     }
 }
